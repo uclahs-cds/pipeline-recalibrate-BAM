@@ -1,0 +1,8 @@
+---
+category: "pipeline"
+description: "A template Nextflow pipeline for styling and standardization"
+maintainers: "Boutros Lab Infrastructure <BoutrosLabInfrastructure@mednet.ucla.edu>"
+languages: ["Nextflow", "Docker"]
+dependencies: ["Java", "Nextflow", "Docker"]
+references: "https://confluence.mednet.ucla.edu/display/BOUTROSLAB/Guide+to+Nextflow"
+tools: ["tool_a:v1.1.0", "tool_b:v1.1.0"]
