@@ -10,4 +10,5 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 ### [Added]
 - Basic configuration setup
-- Input CSV and YAML templates and handling
+- Input YAML templates and handling
+- Per-patient input YAML handling
