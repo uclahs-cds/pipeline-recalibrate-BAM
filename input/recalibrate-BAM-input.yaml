@@ -1,4 +1,0 @@
----
-patient_id: "patient_id"
-input:
-  BAM: "/absolute/path/to/BAM"
