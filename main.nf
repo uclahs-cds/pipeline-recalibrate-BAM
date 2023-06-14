@@ -41,7 +41,12 @@ Starting workflow...
 ------------------------------------
         """
 
-
+include { run_validate_PipeVal } from './external/pipeline-Nextflow-module/modules/PipeVal/validate/main.nf' addParams(
+    options: [
+        docker_image_version: params.pipeval_version,
+        main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
+        ]
+    )
 include { run_SplitIntervals_GATK } from './module/split-intervals.nf'
 include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/modules/common/extract_genome_intervals/main.nf' addParams(
     options: [
@@ -51,7 +56,18 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
     )
 
 workflow {
-    // TO-DO: Add validation for input BAMs
+    Channel.from(params.samples_to_process)
+        .map{ sample -> sample.path }
+        .flatten()
+        .set{ input_ch_validate }
+
+    run_validate_PipeVal(input_ch_validate)
+
+    run_validate_PipeVal.out.validation_result
+        .collectFile(
+            name: 'input_validation.txt',
+            storeDir: "${params.output_dir_base}/validation"
+        )
 
     extract_GenomeIntervals("${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict")
 
