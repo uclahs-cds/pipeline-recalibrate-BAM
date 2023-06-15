@@ -55,11 +55,37 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         ]
     )
 
+// Returns the index file for the given bam or vcf
+def indexFile(bam_or_vcf) {
+    if (bam_or_vcf.endsWith('.bam')) {
+        return "${bam_or_vcf}.bai"
+    } else if (bam_or_vcf.endsWith('vcf.gz')) {
+        return "${bam_or_vcf}.tbi"
+    } else {
+        throw new Exception("Index file for ${bam_or_vcf} file type not supported. Use .bam or .vcf.gz files.")
+    }
+}
+
 workflow {
     Channel.from(params.samples_to_process)
-        .map{ sample -> sample.path }
+        .map{ sample -> ['index': indexFile(sample.path)] + sample }
+        .set{ input_ch_samples_with_index }
+
+    input_ch_samples_with_index
+        .map{ sample -> [sample.path, sample.index] }
         .flatten()
         .set{ input_ch_validate }
+
+    input_ch_sample_with_index
+        .map{ sample -> sample.id }
+        .flatten()
+        .set{ input_ch_sample_ids }
+
+    input_ch_samples_with_index
+        .map{ sample -> [sample.path, sample.index] }
+        .flatten()
+        .collect()
+        .set{ input_ch_all_bams_and_indices }
 
     run_validate_PipeVal(input_ch_validate)
 
@@ -78,5 +104,15 @@ workflow {
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
     )
 
-    run_SplitIntervals_GATK.out.interval_list.flatten().view{"interval: $it"}
+    run_SplitIntervals_GATK.out.interval_list
+        .flatten()
+        .map{ interval_path ->
+            [
+                'interval_id': file(interval_path).getName().replace('-scattered.interval_list', ''),
+                'interval_path': interval_path
+            ]
+        }
+        .set{ input_ch_intervals }
+
+
 }
