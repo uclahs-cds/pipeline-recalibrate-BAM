@@ -22,6 +22,7 @@ Current Configuration:
         bundle_known_indels_vcf_gz: ${params.bundle_known_indels_vcf_gz}
         bundle_v0_dbsnp138_vcf_gz: ${params.bundle_v0_dbsnp138_vcf_gz}
         bundle_contest_hapmap_3p3_vcf_gz: ${params.bundle_contest_hapmap_3p3_vcf_gz}
+        intervals: ${(params.is_targeted) ?: 'WGS'}
 
     - output: 
         output: ${params.output_dir}
@@ -54,6 +55,7 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         output_dir: params.output_dir_base
         ]
     )
+include { realign_indels } from './module/indel-realignment.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -76,16 +78,18 @@ workflow {
         .flatten()
         .set{ input_ch_validate }
 
-    input_ch_sample_with_index
+    input_ch_samples_with_index
         .map{ sample -> sample.id }
         .flatten()
         .set{ input_ch_sample_ids }
 
     input_ch_samples_with_index
-        .map{ sample -> [sample.path, sample.index] }
-        .flatten()
-        .collect()
-        .set{ input_ch_all_bams_and_indices }
+        .reduce( ['bams': [], 'indices': []] ){ a, b ->
+            a.bams.add(b.path);
+            a.indices.add(b.index);
+            return a
+        }
+        .set{ input_ch_collected_files }
 
     run_validate_PipeVal(input_ch_validate)
 
@@ -114,5 +118,12 @@ workflow {
         }
         .set{ input_ch_intervals }
 
+    input_ch_collected_files
+        .combine(input_ch_intervals)
+        .map{ it -> it[0] + it[1] }
+        .set{ input_ch_indel_realignment }
 
+    realign_indels(input_ch_indel_realignment)
+
+    realign_indels.out.output_ch_realign_indels.view{"IR output: ${it}"}
 }
