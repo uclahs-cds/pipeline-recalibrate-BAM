@@ -38,29 +38,39 @@ process run_SplitIntervals_GATK {
     script:
     """
     set -euo pipefail
-    assembled_chr_to_exclude=''
-    for i in `grep -E '^(chr|)([0-9]+|X|Y|M)\$' ${intervals}`
-    do
+    if ${params.parallelize_by_chromosome}
+    then
+        assembled_chr_to_exclude=''
+        for i in `grep -E '^(chr|)([0-9]+|X|Y|M)\$' ${intervals}`
+        do
+            gatk SplitIntervals \
+                -R ${reference} \
+                -L ${intervals} \
+                -L \$i \
+                --interval-set-rule INTERSECTION \
+                --scatter-count 1 \
+                -O ./
+
+            mv 0000-scattered.interval_list \$i-scattered.interval_list
+            assembled_chr_to_exclude="\$assembled_chr_to_exclude -XL \$i"
+        done
+
         gatk SplitIntervals \
             -R ${reference} \
             -L ${intervals} \
-            -L \$i \
+            \$assembled_chr_to_exclude \
             --interval-set-rule INTERSECTION \
             --scatter-count 1 \
             -O ./
 
-        mv 0000-scattered.interval_list \$i-scattered.interval_list
-        assembled_chr_to_exclude="\$assembled_chr_to_exclude -XL \$i"
-    done
-
-    gatk SplitIntervals \
-        -R ${reference} \
-        -L ${intervals} \
-        \$assembled_chr_to_exclude \
-        --interval-set-rule INTERSECTION \
-        --scatter-count 1 \
-        -O ./
-
-    mv 0000-scattered.interval_list nonassembled-scattered.interval_list
+        mv 0000-scattered.interval_list nonassembled-scattered.interval_list
+    else
+        gatk SplitIntervals \
+            -R ${reference} \
+            -L ${intervals} \
+            --scatter-count ${params.scatter_count} \
+            ${params.split_intervals_extra_args} \
+            -O ./
+    fi
     """
 }
