@@ -132,4 +132,6 @@ workflow {
         realign_indels.out.output_ch_realign_indels,
         input_ch_sample_ids
     )
+
+    Add the dynamic memory splitting for BaseRecalibrator to config!!!!!!!!!!!!!!!!!
 }
