@@ -1,0 +1,117 @@
+include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
+/*
+    Nextflow module for generating base recalibration table
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
+        bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
+        bundle_known_indels_vcf_gz: path to set of known indels
+        bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
+        bundle_v0_dbsnp138_vcf_gz: path to dbSNP variants
+        bundle_v0_dbsnp138_vcf_gz_tbi: path to index of dbSNP variants
+        all_intervals: list or tuple of paths to all split intervals
+        indelrealigned_bams: list or tuple of paths to indel realigned BAMs
+        indelrealigned_bams_bai: list or tuple of paths to indel realigned BAM indices
+        (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
+        
+    params:
+        params.output_dir: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+        params.is_targeted: bool. Indicator of whether in targeted exome mode or in WGS mode
+        params.gatk_command_mem_diff: float(memory)
+*/
+process run_BaseRecalibrator_GATK {
+    container params.docker_image_gatk
+    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
+      mode: "copy",
+      pattern: "*.grp"
+
+    publishDir path: "${params.log_output_dir}/process-log",
+      pattern: ".command.*",
+      mode: "copy",
+      saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
+
+    input:
+    path(reference_fasta)
+    path(reference_fasta_fai)
+    path(reference_fasta_dict)
+    path(bundle_mills_and_1000g_gold_standards_vcf_gz)
+    path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
+    path(bundle_known_indels_vcf_gz)
+    path(bundle_known_indels_vcf_gz_tbi)
+    path(bundle_v0_dbsnp138_vcf_gz)
+    path(bundle_v0_dbsnp138_vcf_gz_tbi)
+    tuple path(indelrealigned_bams), path(indelrealigned_bams_bai), val(sample_id)
+
+    output:
+    path(".command.*")
+    tuple val(sample_id), path("${sample_id}_recalibration_table.grp"), emit: recalibration_table
+
+    script:
+    all_ir_bams = indelrealigned_bams.collect{ "--input '${it}'" }.join(' ')
+    targeted_options = params.is_targeted ? "--intervals ${params.intervals} --interval-padding 100" : ""
+    """
+    set -euo pipefail
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+        BaseRecalibrator \
+        ${all_ir_bams} \
+        --reference ${reference_fasta} \
+        --verbosity INFO \
+        --known-sites ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
+        --known-sites ${bundle_known_indels_vcf_gz} \
+        --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
+        --output ${sample_id}_recalibration_table.grp \
+        ${targeted_options} \
+        --read-filter SampleReadFilter \
+        --sample ${sample_id}
+    """
+}
+
+workflow recalibrate_base {
+    take:
+    ir_samples
+    sample_ids
+
+    main:
+    ir_samples
+        .reduce( ['bams': [], 'indices': []] ){ a, b ->
+            a.bams.add(b.bam);
+            a.indices.add(b.bam_index);
+            return a
+        }
+        .combine(sample_ids)
+        .map{ it ->
+            [
+                it[0].bams,
+                it[0].indices,
+                it[1]
+            ]
+        }
+        .set{ input_ch_base_recalibrator }
+
+    input_ch_base_recalibrator.view{"Recalibrator input: ${it}"}
+
+    run_BaseRecalibrator_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
+        "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+        params.bundle_known_indels_vcf_gz,
+        "${params.bundle_known_indels_vcf_gz}.tbi",
+        params.bundle_v0_dbsnp138_vcf_gz,
+        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        input_ch_base_recalibrator
+    )
+
+    run_BaseRecalibrator_GATK.out.recalibration_table.view{"Recal Table: ${it}"}
+
+    emit:
+    // Placeholder output
+    recalibrated_data = run_BaseRecalibrator_GATK.out.recalibration_table
+}
