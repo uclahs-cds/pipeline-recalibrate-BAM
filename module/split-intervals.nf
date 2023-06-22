@@ -18,7 +18,7 @@ process run_SplitIntervals_GATK {
 
     publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
                mode: "copy",
-               pattern: "*-scattered.interval_list",
+               pattern: "*-contig.interval_list",
                enabled: params.save_intermediate_files
     publishDir "${params.log_output_dir}/process-log",
                mode: "copy",
@@ -32,35 +32,50 @@ process run_SplitIntervals_GATK {
     path reference_dict
 
     output:
-    path "*-scattered.interval_list", emit: interval_list
+    path "*-contig.interval_list", emit: interval_list
     path ".command.*"
 
     script:
     """
     set -euo pipefail
-    assembled_chr_to_exclude=''
-    for i in `grep -E '^(chr|)([0-9]+|X|Y|M)\$' ${intervals}`
-    do
+    if ${params.parallelize_by_chromosome}
+    then
+        assembled_chr_to_exclude=''
+        for i in `grep -E '^(chr|)([0-9]+|X|Y|M)\$' ${intervals}`
+        do
+            gatk SplitIntervals \
+                -R ${reference} \
+                -L ${intervals} \
+                -L \$i \
+                --interval-set-rule INTERSECTION \
+                --scatter-count 1 \
+                -O ./
+
+            mv 0000-scattered.interval_list \$i-contig.interval_list
+            assembled_chr_to_exclude="\$assembled_chr_to_exclude -XL \$i"
+        done
+
         gatk SplitIntervals \
             -R ${reference} \
             -L ${intervals} \
-            -L \$i \
+            \$assembled_chr_to_exclude \
             --interval-set-rule INTERSECTION \
             --scatter-count 1 \
             -O ./
 
-        mv 0000-scattered.interval_list \$i-scattered.interval_list
-        assembled_chr_to_exclude="\$assembled_chr_to_exclude -XL \$i"
-    done
+        mv 0000-scattered.interval_list nonassembled-contig.interval_list
+    else
+        gatk SplitIntervals \
+            -R ${reference} \
+            -L ${intervals} \
+            --scatter-count ${params.scatter_count} \
+            ${params.split_intervals_extra_args} \
+            -O ./
 
-    gatk SplitIntervals \
-        -R ${reference} \
-        -L ${intervals} \
-        \$assembled_chr_to_exclude \
-        --interval-set-rule INTERSECTION \
-        --scatter-count 1 \
-        -O ./
-
-    mv 0000-scattered.interval_list nonassembled-scattered.interval_list
+        for interval in `ls *-scattered.interval_list`
+        do
+            mv \$interval `echo \$interval | cut -d '-' -f 1`-contig.interval_list
+        done
+    fi
     """
 }

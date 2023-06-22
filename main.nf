@@ -113,7 +113,7 @@ workflow {
         .flatten()
         .map{ interval_path ->
             [
-                'interval_id': file(interval_path).getName().replace('-scattered.interval_list', ''),
+                'interval_id': file(interval_path).getName().replace('-contig.interval_list', ''),
                 'interval_path': interval_path
             ]
         }

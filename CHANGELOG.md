@@ -12,5 +12,5 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Basic configuration setup
 - Input YAML templates and handling
 - Per-patient input YAML handling
-- Per-chromosome interval splitting process
+- Interval splitting process, either per-chromosome by default or scattered
 - Indel Realignment workflow
