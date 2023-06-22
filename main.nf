@@ -133,5 +133,5 @@ workflow {
         input_ch_sample_ids
     )
 
-    Add the dynamic memory splitting for BaseRecalibrator to config!!!!!!!!!!!!!!!!!
+    // Add the dynamic memory splitting for BaseRecalibrator to config!!!!!!!!!!!!!!!!!
 }
