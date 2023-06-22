@@ -32,7 +32,7 @@ process run_SplitIntervals_GATK {
     path reference_dict
 
     output:
-    path "*-scattered.interval_list", emit: interval_list
+    path "*-contig.interval_list", emit: interval_list
     path ".command.*"
 
     script:
@@ -51,7 +51,7 @@ process run_SplitIntervals_GATK {
                 --scatter-count 1 \
                 -O ./
 
-            mv 0000-scattered.interval_list \$i-scattered.interval_list
+            mv 0000-scattered.interval_list \$i-contig.interval_list
             assembled_chr_to_exclude="\$assembled_chr_to_exclude -XL \$i"
         done
 
@@ -63,7 +63,7 @@ process run_SplitIntervals_GATK {
             --scatter-count 1 \
             -O ./
 
-        mv 0000-scattered.interval_list nonassembled-scattered.interval_list
+        mv 0000-scattered.interval_list nonassembled-contig.interval_list
     else
         gatk SplitIntervals \
             -R ${reference} \
@@ -71,6 +71,11 @@ process run_SplitIntervals_GATK {
             --scatter-count ${params.scatter_count} \
             ${params.split_intervals_extra_args} \
             -O ./
+
+        for interval in `ls *-scattered.interval_list`
+        do
+            mv \$interval `echo \$interval | cut -d '-' -f 1`-contig.interval_list
+        done
     fi
     """
 }
