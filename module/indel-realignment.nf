@@ -121,7 +121,7 @@ process run_IndelRealigner_GATK {
 
     script:
     arg_bam = bam.collect{ "--input_file '$it'" }.join(' ')
-    has_unmapped = (interval_id == 'nonassembled')
+    has_unmapped = (interval_id == 'nonassembled' || interval_id == '0000')
     unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     output_filename = generate_standard_filename(
