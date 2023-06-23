@@ -72,6 +72,89 @@ process run_BaseRecalibrator_GATK {
     """
 }
 
+/*
+    Nextflow module for recalibrating base quality scores in BAM file
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        indelrealigned_bam: list or tuple of paths to indel realigned BAMs
+        indelrealigned_bam_index: list or tuple of paths to indel realigned BAM indices
+        interval: path to specific intervals file associated with input BAM
+        includes_unmapped: boolean to indicate if unmapped reads are included in input BAM
+        sample_id: Identifier for sample being processed
+        recalibration_table: path to base recalibration table
+
+    params:
+        params.output_dir_base: string(path)
+        params.log_output_dir: string(path)
+        params.save_intermediate_files: bool.
+        params.docker_image_gatk: string
+        params.gatk_command_mem_diff: float(memory)
+        params.is_emit_original_quals: bool. Indicator of whether to keep original base quality scores
+*/
+process run_ApplyBQSR_GATK {
+    container params.docker_image_gatk
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+      mode: "copy",
+      enabled: params.save_intermediate_files,
+      pattern: "*_recalibrated-*"
+
+    publishDir path: "${params.log_output_dir}/process-log",
+      pattern: ".command.*",
+      mode: "copy",
+      saveAs: { "${task.process.replace(':', '/')}-${sample_id}-${interval_id}/log${file(it).getName()}" }
+
+    input:
+    path(reference_fasta)
+    path(reference_fasta_fai)
+    path(reference_fasta_dict)
+    tuple path(indelrealigned_bam),
+          path(indelrealigned_bam_index),
+          val(interval_id),
+          path(interval),
+          val(includes_unmapped),
+          val(sample_id),
+          path(recalibration_table)
+
+    output:
+    path(".command.*")
+    tuple path("${output_filename}"),
+          path("${output_filename}"), emit: output_ch_apply_bqsr
+    tuple path(indelrealigned_bam),
+          path(indelrealigned_bam_index), emit: output_ch_deletion
+
+    script:
+    unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
+    combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
+    output_filename = generate_standard_filename(
+        params.aligner,
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_tools': ["GATK-${params.gatk_version}"],
+            'additional_information': "recalibrated-${interval_id}.bam"
+        ]
+    )
+    """
+    set -euo pipefail
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+        ApplyBQSR \
+        --input ${indelrealigned_bam} \
+        --bqsr-recal-file ${recalibration_table} \
+        --reference ${reference_fasta} \
+        --read-filter SampleReadFilter \
+        ${combined_interval_options} \
+        --emit-original-quals ${params.is_emit_original_quals} \
+        --output /dev/stdout \
+        --sample ${sample_id} 2> .command.err | \
+        samtools view -h | \
+        awk '(/^@RG/ && /SM:${sample_id}/) || ! /^@RG/' | \
+        samtools view --write-index -b -o ${output_filename}
+    """
+}
+
 workflow recalibrate_base {
     take:
     ir_samples
@@ -110,6 +193,30 @@ workflow recalibrate_base {
     )
 
     run_BaseRecalibrator_GATK.out.recalibration_table.view{"Recal Table: ${it}"}
+
+    ir_samples
+        .combine(run_BaseRecalibrator_GATK.out.recalibration_table)
+        .map{ it ->
+            [
+                it[0].bam,
+                it[0].bam_index,
+                it[0].interval_id,
+                it[0].interval,
+                it[0].has_unmapped,
+                it[1],
+                it[2]
+            ]
+        }
+        .set{ input_ch_apply_bqsr }
+
+    run_ApplyBQSR_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        input_ch_apply_bqsr
+    )
+
+    run_ApplyBQSR_GATK.out.output_ch_apply_bqsr.view{"BQSRed: $it"}
 
     emit:
     // Placeholder output
