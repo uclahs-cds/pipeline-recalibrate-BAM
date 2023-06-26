@@ -15,10 +15,10 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
         all_intervals: list or tuple of paths to all split intervals
         indelrealigned_bams: list or tuple of paths to indel realigned BAMs
         indelrealigned_bams_bai: list or tuple of paths to indel realigned BAM indices
-        (sample_id, normal_id, tumour_id):  tuples of string identifiers for the samples
+        sample_id: identifier for the sample
         
     params:
-        params.output_dir: string(path)
+        params.output_dir_base: string(path)
         params.log_output_dir: string(path)
         params.save_intermediate_files: bool.
         params.docker_image_gatk: string
