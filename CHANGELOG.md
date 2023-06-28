@@ -14,3 +14,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Per-patient input YAML handling
 - Interval splitting process, either per-chromosome by default or scattered
 - Indel Realignment workflow
+- BQSR workflow

@@ -56,6 +56,7 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         ]
     )
 include { realign_indels } from './module/indel-realignment.nf'
+include { recalibrate_base } from './module/base-recalibration.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -126,4 +127,9 @@ workflow {
     realign_indels(input_ch_indel_realignment)
 
     realign_indels.out.output_ch_realign_indels.view{"IR output: ${it}"}
+
+    recalibrate_base(
+        realign_indels.out.output_ch_realign_indels,
+        input_ch_sample_ids
+    )
 }
