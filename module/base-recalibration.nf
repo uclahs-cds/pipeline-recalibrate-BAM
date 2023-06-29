@@ -120,8 +120,7 @@ process run_ApplyBQSR_GATK {
 
     output:
     path(".command.*")
-    tuple path("${output_filename}"),
-          path("${output_filename}"), emit: output_ch_apply_bqsr
+    tuple val(sample_id), path("${output_filename}"), emit: output_ch_apply_bqsr
     tuple path(indelrealigned_bam),
           path(indelrealigned_bam_index), emit: output_ch_deletion
 
@@ -151,7 +150,7 @@ process run_ApplyBQSR_GATK {
         --sample ${sample_id} 2> .command.err | \
         samtools view -h | \
         awk '(/^@RG/ && /SM:${sample_id}/) || ! /^@RG/' | \
-        samtools view --write-index -b -o ${output_filename}
+        samtools view -b -o ${output_filename}
     """
 }
 
@@ -216,9 +215,15 @@ workflow recalibrate_base {
         input_ch_apply_bqsr
     )
 
-    run_ApplyBQSR_GATK.out.output_ch_apply_bqsr.view{"BQSRed: $it"}
+    run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
+        .map{
+            [
+                'sample': it[0],
+                'bam': it[1]
+            ]
+        }
+        .set{ output_ch_base_recalibration }
 
     emit:
-    // Placeholder output
-    recalibrated_data = run_BaseRecalibrator_GATK.out.recalibration_table
+    recalibrated_samples = output_ch_base_recalibration
 }
