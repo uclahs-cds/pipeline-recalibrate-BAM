@@ -139,7 +139,7 @@ process deduplicate_records_SAMtools {
 */
 process run_index_SAMtools {
     container params.docker_image_samtools
-    publishDir path: "${params.output_dir}/output",
+    publishDir path: "${params.output_dir_base}/output",
         mode: "copy",
         pattern: "*.bai"
 

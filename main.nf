@@ -127,8 +127,6 @@ workflow {
 
     realign_indels(input_ch_indel_realignment)
 
-    realign_indels.out.output_ch_realign_indels.view{"IR output: ${it}"}
-
     recalibrate_base(
         realign_indels.out.output_ch_realign_indels,
         input_ch_sample_ids
