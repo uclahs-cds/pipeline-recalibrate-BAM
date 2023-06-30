@@ -176,8 +176,6 @@ workflow recalibrate_base {
         }
         .set{ input_ch_base_recalibrator }
 
-    input_ch_base_recalibrator.view{"Recalibrator input: ${it}"}
-
     run_BaseRecalibrator_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
@@ -190,8 +188,6 @@ workflow recalibrate_base {
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         input_ch_base_recalibrator
     )
-
-    run_BaseRecalibrator_GATK.out.recalibration_table.view{"Recal Table: ${it}"}
 
     ir_samples
         .combine(run_BaseRecalibrator_GATK.out.recalibration_table)
