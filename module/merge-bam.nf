@@ -40,8 +40,8 @@ process run_MergeSamFiles_Picard {
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
     additional_information = (params.parallelize_by_chromosome) ?
-        ".bam" :
-        "realigned_recalibrated_merged.bam"
+        "" :
+        "realigned_recalibrated_merged"
     output_file_name = generate_standard_filename(
         params.aligner,
         params.dataset_id,
@@ -51,6 +51,7 @@ process run_MergeSamFiles_Picard {
             'additional_information': additional_information
         ]
     )
+    output_file_name = "${output_file_name}.bam"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=${workDir} \
@@ -86,7 +87,7 @@ process deduplicate_records_SAMtools {
     container params.docker_image_samtools
     publishDir path: "${params.output_dir_base}/output",
         mode: "copy",
-        pattern: "${output_file_name}.bam"
+        pattern: "${output_file_name}"
 
     publishDir path: "${params.log_output_dir}/process-log",
         pattern: ".command.*",
@@ -110,10 +111,10 @@ process deduplicate_records_SAMtools {
         params.dataset_id,
         sample_id,
         [
-            'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': ".bam"
+            'additional_tools': ["GATK-${params.gatk_version}"]
         ]
     )
+    output_file_name = "${output_file_name}.bam"
     """
     samtools view \
         -h \
