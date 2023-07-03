@@ -58,6 +58,9 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
 include { realign_indels } from './module/indel-realignment.nf'
 include { recalibrate_base } from './module/base-recalibration.nf'
 include { merge_bams } from './module/merge-bam.nf'
+include {
+    run_GetPileupSummaries_GATK
+} from './module/summary-qc.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -133,4 +136,26 @@ workflow {
     )
 
     merge_bams(recalibrate_base.out.recalibrated_samples)
+
+    merge_bams.out.output_ch_merge_bams
+        .map{ [it.sample, it.bam, it.bam_index] }
+        .set{ input_ch_pileupsummaries }
+
+    summary_intervals = (params.is_targeted) ?
+        Channel.from(params.intervals).collect() :
+        extract_GenomeIntervals.out.genomic_intervals
+
+    summary_intervals.combine(input_ch_pileupsummaries)
+        .map{ it[0] }
+        .set{ input_ch_pileupsummaries_intervals }
+
+    run_GetPileupSummaries_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.bundle_contest_hapmap_3p3_vcf_gz,
+        params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
+        input_ch_pileupsummaries_intervals,
+        input_ch_pileupsummaries
+    )
 }

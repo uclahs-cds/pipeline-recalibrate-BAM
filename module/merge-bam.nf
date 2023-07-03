@@ -183,4 +183,17 @@ workflow merge_bams {
         deduplicate_records_SAMtools.out.dedup_bam
 
     run_index_SAMtools(input_ch_index)
+
+    run_index_SAMtools.out.indexed_out
+        .map{
+            [
+                'sample': it[0],
+                'bam': it[1],
+                'bam_index': it[2]
+            ]
+        }
+        .set{ output_ch_merge_bams }
+
+    emit:
+    output_ch_merge_bams = output_ch_merge_bams
 }
