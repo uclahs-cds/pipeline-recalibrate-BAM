@@ -60,6 +60,8 @@ include { recalibrate_base } from './module/base-recalibration.nf'
 include { merge_bams } from './module/merge-bam.nf'
 include {
     run_GetPileupSummaries_GATK
+    run_CalculateContamination_GATK
+    run_DepthOfCoverage_GATK
 } from './module/summary-qc.nf'
 
 // Returns the index file for the given bam or vcf
@@ -139,23 +141,69 @@ workflow {
 
     merge_bams.out.output_ch_merge_bams
         .map{ [it.sample, it.bam, it.bam_index] }
-        .set{ input_ch_pileupsummaries }
+        .set{ input_ch_merged_bams }
 
     summary_intervals = (params.is_targeted) ?
         Channel.from(params.intervals).collect() :
         extract_GenomeIntervals.out.genomic_intervals
 
-    summary_intervals.combine(input_ch_pileupsummaries)
+    summary_intervals.combine(input_ch_merged_bams)
         .map{ it[0] }
-        .set{ input_ch_pileupsummaries_intervals }
+        .set{ input_ch_summary_intervals }
 
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
         "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
         params.bundle_contest_hapmap_3p3_vcf_gz,
-        params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
-        input_ch_pileupsummaries_intervals,
-        input_ch_pileupsummaries
+        "${params.bundle_contest_hapmap_3p3_vcf_gz}.tbi",
+        input_ch_summary_intervals,
+        input_ch_merged_bams
+    )
+
+    input_ch_samples_with_index
+        .filter{ it.sample_type == 'normal' }
+        .map{ it -> [it.id] }
+        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
+        .set{ normal_pileupsummaries }
+
+    input_ch_samples_with_index
+        .filter{ it.sample_type == 'tumor' }
+        .map{ it -> [it.id] }
+        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
+        .set{ tumor_pileupsummaries }
+
+    normal_pileupsummaries.combine(tumor_pileupsummaries)
+        .map{ it -> it.flatten() + ['tumor_paired'] }
+        .set{ paired_pileups }
+
+    normal_pileupsummaries.map{ it -> it + ['NO_ID', '/scratch/NO_FILE.table', 'normal'] }
+        .set{ normal_pileups }
+
+    tumor_pileupsummaries.map{ ['NO_ID', '/scratch/NO_FILE.table'] + it + 'tumor' }
+        .set{ tumor_pileups }
+
+    input_ch_calculate_contamination = normal_pileups
+
+    def sample_types = params.samples_to_process.collect{ sample -> sample.sample_type }
+
+    if (sample_types.contains('normal') && sample_types.contains('tumor')) {
+        input_ch_calculate_contamination
+            .mix(paired_pileups)
+            .set{ input_ch_calculate_contamination }
+    } else {
+        input_ch_calculate_contamination
+            .mix(tumor_pileups)
+            .set{ input_ch_calculate_contamination }
+    }
+
+    run_CalculateContamination_GATK(input_ch_calculate_contamination)
+
+    run_DepthOfCoverage_GATK(
+        params.reference_fasta,
+        "${params.reference_fasta}.fai",
+        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+        input_ch_summary_intervals,
+        input_ch_merged_bams
     )
 }
