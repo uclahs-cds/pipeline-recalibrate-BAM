@@ -76,6 +76,15 @@ bundle_contest_hapmap_3p3_vcf_gz:
   mode: 'r'
   required: true
   help: 'Absolute path to ConEst HapMap 3p3 VCF'
+metapipeline_delete_input_bams:
+  type: 'Bool'
+  required: true
+  default: false
+  help: 'Whether to delete the input BAMs'
+metapipeline_final_output_dir:
+  type: 'String'
+  required: false
+  help: 'Directory containing final outputs to check before input deletion'
 input:
   type: 'InputNamespace'
   required: true
