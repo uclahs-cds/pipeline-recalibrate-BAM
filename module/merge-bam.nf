@@ -1,4 +1,14 @@
 include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include {
+    remove_intermediate_files as remove_unmerged_BAMs
+    remove_intermediate_files as remove_merged_BAM
+    } from '../external/pipeline-Nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
+        options: [
+            save_intermediate_files: params.save_intermediate_files,
+            output_dir: params.output_dir_base,
+            log_output_dir: params.log_output_dir
+            ]
+        )
 /*
     Nextflow module for merging BAM files
 
@@ -36,6 +46,7 @@ process run_MergeSamFiles_Picard {
     output:
     path(".command.*")
     tuple val(sample_id), path(output_file_name), emit: merged_bam
+    path(bams), emit: output_ch_deletion
 
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
@@ -176,7 +187,17 @@ workflow merge_bams {
 
     run_MergeSamFiles_Picard(input_ch_merge)
 
+    remove_unmerged_BAMs(
+        run_MergeSamFiles_Picard.out.output_ch_deletion.flatten(),
+        "merge_complete"
+    )
+
     deduplicate_records_SAMtools(run_MergeSamFiles_Picard.out.merged_bam)
+
+    remove_merged_BAM(
+        deduplicate_records_SAMtools.out.bam_for_deletion.flatten(),
+        "deduplication_complete"
+    )
 
     input_ch_index = (params.parallelize_by_chromosome) ?
         run_MergeSamFiles_Picard.out.merged_bam :

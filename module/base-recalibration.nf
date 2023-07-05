@@ -1,4 +1,13 @@
 include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include {
+    remove_intermediate_files
+    } from '../external/pipeline-Nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
+        options: [
+            save_intermediate_files: params.save_intermediate_files,
+            output_dir: params.output_dir_base,
+            log_output_dir: params.log_output_dir
+            ]
+        )
 /*
     Nextflow module for generating base recalibration table
 
@@ -121,8 +130,7 @@ process run_ApplyBQSR_GATK {
     output:
     path(".command.*")
     tuple val(sample_id), path("${output_filename}"), emit: output_ch_apply_bqsr
-    tuple path(indelrealigned_bam),
-          path(indelrealigned_bam_index), emit: output_ch_deletion
+    tuple path(indelrealigned_bam), path(indelrealigned_bam_index), emit: output_ch_deletion
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
@@ -219,6 +227,11 @@ workflow recalibrate_base {
             ]
         }
         .set{ output_ch_base_recalibration }
+
+    remove_intermediate_files(
+        run_ApplyBQSR_GATK.out.output_ch_deletion.flatten(),
+        "bqsr_complete"
+    )
 
     emit:
     recalibrated_samples = output_ch_base_recalibration
