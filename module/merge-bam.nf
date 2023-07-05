@@ -6,9 +6,10 @@ include {
         options: [
             save_intermediate_files: params.save_intermediate_files,
             output_dir: params.output_dir_base,
-            log_output_dir: params.log_output_dir
+            log_output_dir: "${params.log_output_dir}/process-log"
             ]
         )
+include { calculate_sha512 } from './checksum.nf'
 /*
     Nextflow module for merging BAM files
 
@@ -214,6 +215,13 @@ workflow merge_bams {
             ]
         }
         .set{ output_ch_merge_bams }
+
+    output_ch_merge_bams
+        .map{ [it.bam, it.bam_index] }
+        .flatten()
+        .set{ input_ch_calculate_sha512 }
+
+    calculate_sha512(input_ch_calculate_sha512)
 
     emit:
     output_ch_merge_bams = output_ch_merge_bams

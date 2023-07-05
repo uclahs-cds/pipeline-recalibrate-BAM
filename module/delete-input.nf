@@ -4,7 +4,7 @@ include { remove_intermediate_files } from '../external/pipeline-Nextflow-module
     options: [
         save_intermediate_files: !params.metapipeline_delete_input_bams || params.save_intermediate_files,
         output_dir: params.output_dir_base,
-        log_output_dir: params.log_output_dir
+        log_output_dir: "${params.log_output_dir}/process-log"
         ]
     )
 
