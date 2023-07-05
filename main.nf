@@ -63,6 +63,7 @@ include {
     run_CalculateContamination_GATK
     run_DepthOfCoverage_GATK
 } from './module/summary-qc.nf'
+include { delete_input } from './module/delete-input.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -76,6 +77,9 @@ def indexFile(bam_or_vcf) {
 }
 
 workflow {
+    /**
+    *   Input channel processing
+    */
     Channel.from(params.samples_to_process)
         .map{ sample -> ['index': indexFile(sample.path)] + sample }
         .set{ input_ch_samples_with_index }
@@ -98,6 +102,10 @@ workflow {
         }
         .set{ input_ch_collected_files }
 
+
+    /**
+    *   Input validation
+    */
     run_validate_PipeVal(input_ch_validate)
 
     run_validate_PipeVal.out.validation_result
@@ -106,6 +114,10 @@ workflow {
             storeDir: "${params.output_dir_base}/validation"
         )
 
+
+    /**
+    *   Interval extraction and splitting
+    */
     extract_GenomeIntervals("${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict")
 
     run_SplitIntervals_GATK(
@@ -125,6 +137,10 @@ workflow {
         }
         .set{ input_ch_intervals }
 
+
+    /**
+    *   Indel realignment
+    */
     input_ch_collected_files
         .combine(input_ch_intervals)
         .map{ it -> it[0] + it[1] }
@@ -132,13 +148,47 @@ workflow {
 
     realign_indels(input_ch_indel_realignment)
 
+
+    /**
+    *   Input file deletion
+    */
+    input_ch_samples_with_index
+        .map{ sample -> sample.path }
+        .flatten()
+        .unique()
+        .set{ input_bams }
+
+    realign_indels.out.output_ch_realign_indels
+        .map{ it.has_unmapped }
+        .collect()
+        .set{ ir_complete_signal }
+
+    input_files
+        .combine(ir_complete_signal)
+        .map{ it[0] }
+        .set{ input_ch_bams_to_delete }
+
+    delete_input(input_ch_bams_to_delete)
+
+
+    /**
+    *   Base recalibration
+    */
     recalibrate_base(
         realign_indels.out.output_ch_realign_indels,
         input_ch_sample_ids
     )
 
+
+    /**
+    *   Merge BAMs
+    */
     merge_bams(recalibrate_base.out.recalibrated_samples)
 
+
+    /**
+    *   Summary and QC processes
+    */
     merge_bams.out.output_ch_merge_bams
         .map{ [it.sample, it.bam, it.bam_index] }
         .set{ input_ch_merged_bams }
