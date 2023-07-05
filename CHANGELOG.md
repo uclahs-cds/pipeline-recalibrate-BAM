@@ -16,3 +16,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Indel Realignment workflow
 - BQSR workflow
 - Merging workflow
+- Contamination and depth of coverage processes
