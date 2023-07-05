@@ -26,7 +26,7 @@ String get_root_directory(String directory) {
         file_to_check: path to file to be checked for deletion
 */
 process check_deletion_status {
-    container params.docker_image_validate
+    container params.docker_image_pipeval
     containerOptions "--volume ${get_root_directory(params.metapipeline_final_output_dir)}:${get_root_directory(params.metapipeline_final_output_dir)}"
 
     publishDir path: "${params.log_output_dir}/process-log",

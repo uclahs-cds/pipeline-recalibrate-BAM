@@ -163,7 +163,7 @@ workflow {
         .collect()
         .set{ ir_complete_signal }
 
-    input_files
+    input_bams
         .combine(ir_complete_signal)
         .map{ it[0] }
         .set{ input_ch_bams_to_delete }
