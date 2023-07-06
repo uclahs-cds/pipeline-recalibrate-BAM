@@ -113,7 +113,7 @@ process run_ApplyBQSR_GATK {
     publishDir path: "${params.log_output_dir}/process-log",
       pattern: ".command.*",
       mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${sample_id}-${interval_id}/log${file(it).getName()}" }
+      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
 
     input:
     path(reference_fasta)
@@ -129,36 +129,33 @@ process run_ApplyBQSR_GATK {
 
     output:
     path(".command.*")
-    tuple val(sample_id), path("${output_filename}"), emit: output_ch_apply_bqsr
+    path("*_recalibrated-*"), emit: output_ch_apply_bqsr
     tuple path(indelrealigned_bam), path(indelrealigned_bam_index), emit: output_ch_deletion
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
-    output_filename = generate_standard_filename(
-        params.aligner,
-        params.dataset_id,
-        sample_id,
-        [
-            'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': "recalibrated-${interval_id}.bam"
-        ]
-    )
+    all_commands = sample_id.collect{
+        """
+        gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \\
+            ApplyBQSR \\
+            --input ${indelrealigned_bam} \\
+            --bqsr-recal-file ${it}_recalibration_table.grp \\
+            --reference ${reference_fasta} \\
+            --read-filter SampleReadFilter \\
+            ${combined_interval_options} \\
+            --emit-original-quals ${params.is_emit_original_quals} \\
+            --output /dev/stdout \\
+            --sample ${it} 2> .command.err | \\
+            samtools view -h | \\
+            awk '(/^@RG/ && /SM:${it}/) || ! /^@RG/' | \\
+            samtools view -b -o ${generate_standard_filename(params.aligner, params.dataset_id, it, ['additional_tools': ["GATK-${params.gatk_version}"]])}_recalibrated-${interval_id}.bam
+        """
+        }
+        .join("\n")
     """
     set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
-        ApplyBQSR \
-        --input ${indelrealigned_bam} \
-        --bqsr-recal-file ${recalibration_table} \
-        --reference ${reference_fasta} \
-        --read-filter SampleReadFilter \
-        ${combined_interval_options} \
-        --emit-original-quals ${params.is_emit_original_quals} \
-        --output /dev/stdout \
-        --sample ${sample_id} 2> .command.err | \
-        samtools view -h | \
-        awk '(/^@RG/ && /SM:${sample_id}/) || ! /^@RG/' | \
-        samtools view -b -o ${output_filename}
+    ${all_commands}
     """
 }
 
@@ -197,8 +194,16 @@ workflow recalibrate_base {
         input_ch_base_recalibrator
     )
 
+    run_BaseRecalibrator_GATK.out.recalibration_table
+        .reduce( ['ids': [], 'tables': []] ){ a, b ->
+            a.ids.add(b[0]);
+            a.tables.add(b[1]);
+            return a
+        }
+        .set{ all_recal_tables }
+
     ir_samples
-        .combine(run_BaseRecalibrator_GATK.out.recalibration_table)
+        .combine(all_recal_tables)
         .map{ it ->
             [
                 it[0].bam,
@@ -206,8 +211,8 @@ workflow recalibrate_base {
                 it[0].interval_id,
                 it[0].interval,
                 it[0].has_unmapped,
-                it[1],
-                it[2]
+                it[1].ids,
+                it[1].tables
             ]
         }
         .set{ input_ch_apply_bqsr }
@@ -220,10 +225,11 @@ workflow recalibrate_base {
     )
 
     run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
+        .flatten()
         .map{
             [
-                'sample': it[0],
-                'bam': it[1]
+                'sample': it.baseName.split("_")[3], // sample ID
+                'bam': it
             ]
         }
         .set{ output_ch_base_recalibration }
