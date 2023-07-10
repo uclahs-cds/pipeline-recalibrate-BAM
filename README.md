@@ -169,11 +169,11 @@ Please see list of [Contributors](https://github.com/uclahs-cds/pipeline-recalib
 
 Authors: Yash Patel (YashPatel@mednet.ucla.edu), Shu Tao (shutao@mednet.ucla.edu), Stefan Eng (stefaneng@mednet.ucla.edu)
 
-Call-gSNP is licensed under the GNU General Public License version 2. See the file LICENSE for the terms of the GNU GPL license.
+Recalibrate-BAM is licensed under the GNU General Public License version 2. See the file LICENSE for the terms of the GNU GPL license.
 
-Call-gSNP takes BAM files and utilizes GATK to call short germline variants (SNP and INDEL).
+Recalibrate-BAM takes BAM files and utilizes GATK to perform indel realignment and BQSR.
 
-Copyright (C) 2021-2023 University of California Los Angeles ("Boutros Lab") All rights reserved.
+Copyright (C) 2023 University of California Los Angeles ("Boutros Lab") All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
