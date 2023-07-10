@@ -109,16 +109,14 @@ For normal-only or tumour-only samples, exclude the fields for the other state.
 | Input Parameter | Required | Type | Description |
 |:----------------|:---------|:-----|:------------|
 | `dataset_id` | Yes | string | Dataset ID |
-| `avere_prefix` | Yes | string | Prefix for location of avere cache |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
-| `input_csv` | Yes | path | Absolute path to input CSV file |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
 | `aligner` | Yes | string | Original aligner used to align input BAMs; formatted as \<aligner\>-\<aligner-version\> |
 | `cache_intermediate_pipeline_steps` | No | boolean | Set to true to enable process caching from Nextflow; defaults to false |
 | `is_emit_original_quals` | Yes | boolean | Set to true to emit original quality scores; false to omit |
-| `is_NT_paired` | Yes | boolean | Set to true for normal-tumour paired mode, and to false for normal only mode |
 | `is_DOC_run` | Yes | boolean | Set to true to run GATK DepthOfCoverage (very time-consuming for large BAMs); false otherwise |
+| `parallelize_by_chromosome` | Yes | boolean | Whether the parallelize by chromosome or by scattering intervals |
 | `scatter_count` | Yes | integer | Number of intervals to divide into for parallelization |
 | `intervals` | Yes | path | Use all .list in inputs for WGS; Set to absolute path to targeted exome interval file (with .interval_list, .list, .intervals, or .bed suffix) |
 | `gatk_ir_compression` | No | integer | Compression level for BAMs output by IndelRealigner. Default: 0. Range: 0-9 |
@@ -126,9 +124,6 @@ For normal-only or tumour-only samples, exclude the fields for the other state.
 | `bundle_mills_and_1000g_gold_standard_indels_vcf_gz` | Yes | path | Absolute path to Mills & 1000G Gold Standard Indels file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz` |
 | `bundle_known_indels_vcf_gz` | Yes | path | Absolute path to known indels file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Homo_sapiens_assembly38.known_indels.vcf.gz` |
 | `bundle_v0_dbsnp138_vcf_gz` | Yes | path | Absolute path to dbsnp file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz` |
-| `bundle_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/hapmap_3.3.hg38.vcf.gz` |
-| `bundle_omni_1000g_2p5_vcf_gz` | Yes | path | Absolute path to 1000 genomes OMNI 2.5 file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/1000G_omni2.5.hg38.vcf.gz` |
-| `bundle_phase1_1000g_snps_high_conf_vcf_gz` | Yes | path | Absolute path to 1000 genomes phase 1 high-confidence file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/1000G_phase1.snps.high_confidence.hg38.vcf.gz` |
 | `bundle_contest_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 biallelic sites file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz` |
 | `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
 | `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
@@ -141,40 +136,28 @@ For normal-only or tumour-only samples, exclude the fields for the other state.
 
 | Output | Description |
 |:-------|:------------|
-| `<aligner>_<GATK>_<dataset_id>_<normal_id>.bam` | Post-processed normal BAM |
-| `<aligner>_<GATK>_<dataset_id>_<normal_id>.bam.bai` | Post-processed normal BAM index |
-| `<aligner>_<GATK>_<dataset_id>_<normal_id>.bam.sha512` | Post-processed normal BAM sha512 checksum |
-| `<aligner>_<GATK>_<dataset_id>_<tumor_id>.bam` | Post-processed tumour BAM if in normal-tumour paired mode |
-| `<aligner>_<GATK>_<dataset_id>_<tumor_id>.bam.bai` | Post-processed tumour BAM index if in normal-tumour paired mode |
-| `<aligner>_<GATK>_<dataset_id>_<tumor_id>.bam.sha512` | Post-processed tumour BAM sha512 checksum if in normal-tumour paired mode |
-| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz` | Per-sample GVCF |
-| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz.sha512` | Per-sample GVCF checksum |
-| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz.tbi` | Per-sample GVCF index |
-| `<GATK>_<dataset_id>_<normal_id\|tumor_id>.g.vcf.gz.tbi.sha512` | Per-sample GVCF index checksum |
-| `<GATK>_<dataset_id>_<sample_id>.vcf` | Raw variant calls |
-| `<GATK>_<dataset_id>_<sample_id>.vcf.idx` | Raw variant calls index |
-| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz` | SNP and INDEL recalibrated variants |
-| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz.sha512` | SNP and INDEL recalibrated variants checksum |
-| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz.tbi` | SNP and INDEL recalibrated variants index |
-| `<GATK>_<dataset_id>_<sample_id>_VQSR-SNP-AND_INDEL.vcf.gz.tbi.sha512` | SNP and INDEL recalibrated variants index checksum |
-| `<GATK>_<dataset_id>_<sample_id>_snv.vcf.gz` | Filtered SNVs with non-germline and ambiguous variants removed |
-| `<GATK>_<dataset_id>_<sample_id>_snv.vcf.gz.tbi` | Filtered germline SNVs index |
-| `<GATK>_<dataset_id>_<sample_id>_snv.vcf.gz.sha512` | Filtered germline SNVs sha512 checksum |
-| `<GATK>_<dataset_id>_<sample_id>_indel.vcf.gz` | Filtered INDELs with non-germline and ambiguous variants removed |
-| `<GATK>_<dataset_id>_<sample_id>_indel.vcf.gz.tbi` | Filtered germline INDELs index |
-| `<GATK>_<dataset_id>_<sample_id>_indel.vcf.gz.sha512` | Filtered germline INDELs sha512 checksum |
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam` | Post-processes BAM |
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam.sha512` | Post-processes BAM SHA512 checksum |
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam.bai` | Post-processes BAM index |
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam.bai.sha512` | Post-processes BAM index SHA512 checksum |
 | `report.html`, `timeline.html` and `trace.txt` | Nextflow report, timeline and trace files |
 | `*.command.*` | Process specific logging files created by nextflow |
 
 ---
 
-## Benchmarking
+## Discussions
 
-### Test Data Set
+- [Issue tracker](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/issues) to report errors and enhancement ideas.
+- Discussions can take place in [recalibrate-BAM Discussions](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/discussions)
+- [recalibrate-BAM pull requests](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/pulls) are also open for discussion
 
-1. A-mini: A subset dataset consisting of read alignment from chr8, chr21, and chrX.
+---
 
-### Results
+## Contributors
+
+> Update link to repo-specific URL for GitHub Insights Contributors page.
+
+Please see list of [Contributors](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/graphs/contributors) at GitHub.
 
 ---
 
