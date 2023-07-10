@@ -1,0 +1,105 @@
+---
+patient_id:
+  type: 'String'
+  required: true
+  help: 'Patient ID'
+dataset_id:
+  type: 'String'
+  required: true
+  help: 'Dataset ID'
+aligner:
+  type: 'AlignerTool'
+  required: true
+  help: 'Aligner used to align input BAMs. Provided as <Aligner>-<Aligner-version>'
+output_dir:
+  type: 'Path'
+  mode: 'w'
+  required: true
+  help: 'Absolute path to output directory'
+save_intermediate_files:
+  type: 'Bool'
+  required: true
+  default: false
+  help: 'Whether to save intermediate files'
+is_emit_original_quals:
+  type: 'Bool'
+  required: true
+  default: true
+  help: 'Whether to emit original quality scores after recalibration'
+is_DOC_run:
+  type: 'Bool'
+  required: true
+  default: false
+  help: 'Whether to run the DepthOfCoverage process, which is very time-consuming for large BAMs'
+intervals:
+  type: 'String'
+  allow_empty: true
+  required: true
+  help: 'Target intervals to process for DNA panel/targeted sequencing samples; leave empty for WGS'
+scatter_count:
+  type: 'Integer'
+  required: true
+  default: 50
+  help: 'How many intervals to divide the genome into for parallelization'
+split_intervals_extra_args:
+  type: 'String'
+  allow_empty: true
+  required: false
+  help: 'Extra arguments for interval splitting'
+gatk_ir_compression:
+  type: 'Integer'
+  choices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  default: 1
+  required: false
+reference_fasta:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to reference genome fasta'
+bundle_mills_and_1000g_gold_standard_indels_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to Mills and 1000g gold standard INDELs VCF'
+bundle_known_indels_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to known INDELs VCF'
+bundle_v0_dbsnp138_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to v0 dbSNP 138 VCF'
+bundle_contest_hapmap_3p3_vcf_gz:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to ConEst HapMap 3p3 VCF'
+metapipeline_delete_input_bams:
+  type: 'Bool'
+  required: true
+  default: false
+  help: 'Whether to delete the input BAMs'
+metapipeline_final_output_dir:
+  type: 'String'
+  required: false
+  help: 'Directory containing final outputs to check before input deletion'
+input:
+  type: 'InputNamespace'
+  required: true
+  help: 'Input samples'
+  elements:
+    BAM:
+      type: 'InputBAMNamespace'
+      required: true
+      help: 'Input BAMs for calling'
+      elements:
+        normal:
+          type: 'BAMEntryList'
+          required: false
+          help: 'Input normal BAMs'
+        tumor:
+          type: 'BAMEntryList'
+          required: false
+          help: 'Input tumor BAMs'
