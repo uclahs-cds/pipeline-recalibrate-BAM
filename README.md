@@ -11,13 +11,12 @@
 
 ## Overview
 
-This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA) and performs indel realignment and BQSR. It can be run on a single normal sample, a single tumor sample, a normal-tumor paired sample, and a 1 normal-n tumor set of samples.
-
+This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA) and performs indel realignment and BQSR. It can be run on a single normal sample, a single tumor sample, a normal-tumor paired sample, and n normal-n tumor samples.
 ---
 
 ## How To Run
 
-**The pipeline is currently configured to run on a SINGLE NODE mode with normal only, tumour only, normal-tumour paired, or single normal-multiple tumour samples.**
+**The pipeline is currently configured to run on a SINGLE NODE mode with normal only, tumour only, normal-tumour paired, or multiple normal-multiple tumour samples.**
 
 1. Update the params section of the .config file ([Example config](config/template.config)).
 
@@ -47,8 +46,8 @@ python submit_nextflow_pipeline.py \
 
 ## Pipeline Steps
 
-### 1. Split genome into intervals for parallelization
-Use the input target intervals and split them into intervals for parallel processing.
+### 1. Split genome or target intervals into sub-intervals (either scattered or by chromosome) for parallelization
+Use the input target intervals or the whole genome intervals and split them into sub-intervals for parallel processing.
 
 ### 2. Realign Indels
 Generate indel realignment targets and realign indels.
@@ -57,66 +56,53 @@ Generate indel realignment targets and realign indels.
 Assess how sequencing errors correlate with four covariates (assigned quality score, read group the read belongs, machine cycle producing this base, and current and immediately upstream base), and output base quality score recalibration table.
 
 ### 4. Apply BQSR per split interval in parallel
-Print out interval-level recalibrated BAM.
+Apply the recalibration per sample and reheader output as necessary.
 
-### 5. Reheader interval-level BAMs
-In paired mode, reheader the interval-level BAMs.
-
-### 6. Index reheadered BAMs
-Index each reheadered interval-level BAM. After this step, the workflow splits into two: one path (7-10) merges the BAMs for Depth of Coverage and contamination calculations while the other path proceeds with the HaplotypeCaller (11-17).
-
-### 7. Merge interval-level BAMs
+### 5. Merge interval-level BAMs
 Merge BAMs from each interval to generate whole sample BAM.
 
-### 8. Get pileup summaries
+### 6. Deduplicate BAM
+In the case of scattered intervals, run a deduplication process to remove reads duplicated dur to overlap on interval splitting sites.
+
+### 7. Get pileup summaries
 Summarizes counts of reads that support reference, alternate and other alleles for given sites. Results will be used in the next Calculate Contamination step.
 
-### 9. Calculate contamination
+### 8. Calculate contamination
 Calculates the fraction of reads coming from cross-sample contamination, given results from Step 8. Generates a tumor segmentation file.
 
-### 10.	DepthOfCoverage
+### 9.	DepthOfCoverage
 Calculate depth of coverage using the whole sample BAM from step 7.
 
-### 11.	HC – call raw VCF on each interval in parallel
-Generate raw VCF for each split interval using HaplotypeCaller. Generate GVCF for SNPs and INDELs.
-
-### 12. Merge raw VCFs
-Merge raw variants from each interval to generate whole sample raw VCF.
-
-### 13. VQSR (Variant Quality Score Recalibration): Generate VQSR model for SNPs.
-
-### 14. VQSR: Generate VQSR model for INDELs.
-
-### 15. VQSR: Take the whole sample raw VCF from Step 11 as input, and apply the model in Step 13 to generate variants in which only SNPs are recalibrated.
-
-### 16. VQSR: Take the output from Step 15 as input, and apply the model in Step 14 to recalibrate only INDELs.
-
-#### Steps 13 through 16 model the technical profile of variants in a training set and uses that to filter out probable artifacts from the raw VCF. After these four steps, a recalibrated VCF is generated.
-
-### 17. Filter gSNP – Filter out ambiguous variants
-Use customized Perl script to filter out ambiguous variants.
-
-### 18. Generate sha512 checksum
-Generate sha512 checksum for final BAM, filtered VCF, and GVCFs for SNPs and INDELs.
+### 10. Generate sha512 checksum
+Generate sha512 checksum for final BAMs.
 
 ---
 
 ## Inputs
 
-### Input CSV
+### Input YAML
 
 | Field | Type | Description |
 |:------|:-----|:------------|
 | patient_id | string | Patient ID (will be standardized according to data storage structure in the near future) |
-| sample_id | string | Sample ID |
-| normal_id | string | Must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
 | normal_BAM | path | Set to absolute path to normal BAM |
-| tumour_id | string | Must be strictly set to the sample tag (SM:) in the BAM header @RG line (should be also in the pipeline-align-DNA input .csv file) |
-| tumour_BAM | path | Set to absolute path to tumour BAM |
+| tumor_BAM | path | Set to absolute path to tumour BAM |
+
+```
+---
+patient_id: "patient_id"
+input:
+  BAM:
+    normal:
+      - "/absolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+    tumor:
+      - "/absolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+
+```
 
 For normal-only or tumour-only samples, exclude the fields for the other state.
-
-For inputs with one normal sample and multiple tumour samples, add rows. Keep the non-tumour related fields identical for each row and update the tumour fields.
 
 ### Config
 
