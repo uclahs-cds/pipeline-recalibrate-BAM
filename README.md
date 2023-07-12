@@ -6,12 +6,14 @@
 4. [Pipeline Steps](#Pipeline-Steps)
 5. [Inputs](#Inputs)
 5. [Outputs](#Outputs)
-6. [Benchmarking](#Benchmarking)
-7. [References](#References)
+6. [Discussions](#Discussions)
+7. [Contributors](#Contributors)
+8. [References](#References)
 
 ## Overview
 
 This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA) and performs indel realignment and BQSR. It can be run on a single normal sample, a single tumor sample, a normal-tumor paired sample, and n normal-n tumor samples.
+
 ---
 
 ## How To Run
