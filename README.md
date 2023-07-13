@@ -12,13 +12,13 @@
 
 ## Overview
 
-This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA) and performs indel realignment and BQSR. It can be run on a single normal sample, a single tumor sample, a normal-tumor paired sample, and n normal-n tumor samples.
+This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA) and performs indel realignment and BQSR. It can be run with any combination of normal and tumor samples (normal only, tumor only, normal-tumor paired, multiple normal and tumor samples).
 
 ---
 
 ## How To Run
 
-**The pipeline is currently configured to run on a SINGLE NODE mode with normal only, tumour only, normal-tumour paired, or multiple normal-multiple tumour samples.**
+**The pipeline is currently configured to run on a SINGLE NODE mode with normal only, tumor only, normal-tumor paired, or multiple normal and tumor samples.**
 
 1. Update the params section of the .config file ([Example config](config/template.config)).
 
