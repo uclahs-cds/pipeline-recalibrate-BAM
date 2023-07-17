@@ -1,60 +1,82 @@
-# Pipeline Name
+# recalibrate-BAM
 
-- [Pipeline Name](#pipeline-name)
-  - [Overview](#overview)
-  - [How To Run](#how-to-run)
-  - [Flow Diagram](#flow-diagram)
-  - [Pipeline Steps](#pipeline-steps)
-    - [1. Step/Proccess 1](#1-stepproccess-1)
-    - [2. Step/Proccess 2](#2-stepproccess-2)
-    - [3. Step/Proccess n](#3-stepproccess-n)
-  - [Inputs](#inputs)
-  - [Outputs](#outputs)
-  - [Testing and Validation](#testing-and-validation)
-    - [Test Data Set](#test-data-set)
-    - [Validation <version number\>](#validation-version-number)
-    - [Validation Tool](#validation-tool)
-  - [References](#references)
-  - [Discussions](#discussions)
-  - [Contributors](#contributors)
-  - [License](#license) 
+1. [Overview](#Overview)
+2. [How To Run](#How-To-Run)
+3. [Flow Diagram](#Flow-Diagram)
+4. [Pipeline Steps](#Pipeline-Steps)
+5. [Inputs](#Inputs)
+5. [Outputs](#Outputs)
+6. [Discussions](#Discussions)
+7. [Contributors](#Contributors)
+8. [References](#References)
+
 ## Overview
 
-A 3-4 sentence summary of the pipeline, including the pipeline's purpose, the type of expected scientific inputs/outputs of the pipeline (e.g: FASTQs and BAMs), and a list of tools/steps in the pipeline.
+This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA) and performs indel realignment and BQSR. It can be run with any combination of normal and tumor samples (normal only, tumor only, normal-tumor paired, multiple normal and tumor samples).
 
 ---
 
 ## How To Run
 
-1. Update the params section of the .config file
+**The pipeline is currently configured to run on a SINGLE NODE mode with normal only, tumor only, normal-tumor paired, or multiple normal and tumor samples.**
 
-2. Update the input yaml
+1. Update the params section of the .config file ([Example config](config/template.config)).
 
-3. See the submission script, [here](https://github.com/uclahs-cds/tool-submit-nf), to submit your pipeline
+2. Update the YAML.
 
+3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
+
+> **Note**: Because this pipeline uses an image stored in the GitHub Container Registry, you must follow the steps listed in the [Docker Introduction](https://uclahs-cds.atlassian.net/wiki/spaces/BOUTROSLAB/pages/3223396/Container+Registry+-+GitHub+Packages) on Confluence to set up a PAT for your GitHub account and log into the registry on the cluster before running this pipeline.
+
+- YAML input
+```
+python submit_nextflow_pipeline.py \
+       --nextflow_script /path/to/main.nf \
+       --nextflow_config /path/to/call-gSNP.config \
+       --nextflow_yaml /path/to/sample.yaml \
+       --pipeline_run_name job_name \
+       --partition_type <type> \
+       --email email_address
+```
 ---
 
 ## Flow Diagram
 
-A directed acyclic graph of your pipeline.
-
-![alt text](pipeline-name-DAG.png?raw=true)
+![call-gSNP flow diagram](call-gSNP-DSL2.png)
 
 ---
 
 ## Pipeline Steps
 
-### 1. Step/Proccess 1
+### 1. Split genome or target intervals into sub-intervals (either scattered or by chromosome) for parallelization
+Use the input target intervals or the whole genome intervals and split them into sub-intervals for parallel processing.
 
-> A 2-3 sentence description of each step/proccess in your pipeline that includes the purpose of the step/process, the tool(s) being used and their version, and the expected scientific inputs/outputs (e.g: FASTQs and BAMs) of the pipeline.
+### 2. Realign Indels
+Generate indel realignment targets and realign indels.
 
-### 2. Step/Proccess 2
+### 3. Generate BQSR (Base Quality Score Recalibration)
+Assess how sequencing errors correlate with four covariates (assigned quality score, read group the read belongs, machine cycle producing this base, and current and immediately upstream base), and output base quality score recalibration table.
 
-> A 2-3 sentence description of each step/proccess in your pipeline that includes the purpose of the step/process, the tool(s) being used and their version, and the expected scientific inputs/outputs (e.g: FASTQs and BAMs) of the pipeline.
+### 4. Apply BQSR per split interval in parallel
+Apply the recalibration per sample and reheader output as necessary.
 
-### 3. Step/Proccess n
+### 5. Merge interval-level BAMs
+Merge BAMs from each interval to generate whole sample BAM.
 
-> A 2-3 sentence description of each step/proccess in your pipeline that includes the purpose of the step/process, the tool(s) being used and their version, and the expected scientific inputs/outputs (e.g: FASTQs and BAMs) of the pipeline.
+### 6. Deduplicate BAM
+In the case of scattered intervals, run a deduplication process to remove reads duplicated dur to overlap on interval splitting sites.
+
+### 7. Get pileup summaries
+Summarizes counts of reads that support reference, alternate and other alleles for given sites. Results will be used in the next Calculate Contamination step.
+
+### 8. Calculate contamination
+Calculates the fraction of reads coming from cross-sample contamination, given results from Step 8. Generates a tumor segmentation file.
+
+### 9.	DepthOfCoverage
+Calculate depth of coverage using the whole sample BAM from step 7.
+
+### 10. Generate sha512 checksum
+Generate sha512 checksum for final BAMs.
 
 ---
 
@@ -62,80 +84,74 @@ A directed acyclic graph of your pipeline.
 
 ### Input YAML
 
-> include an example of the organization structure within the YAML. Example:
-```yaml
-input 1: 'patient_id'
-input:
-    normal:
-      - id: <normal id>
-        BAM: </path/to/normal.bam>
-    tumor:
-      - id: <tumor id>
-        BAM: </path/to/tumor.bam>
+| Field | Type | Description |
+|:------|:-----|:------------|
+| patient_id | string | Patient ID (will be standardized according to data storage structure in the near future) |
+| normal_BAM | path | Set to absolute path to normal BAM |
+| tumor_BAM | path | Set to absolute path to tumour BAM |
+
 ```
+---
+patient_id: "patient_id"
+input:
+  BAM:
+    normal:
+      - "/absolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+    tumor:
+      - "/absolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+
+```
+
+For normal-only or tumour-only samples, exclude the fields for the other state.
 
 ### Config
 
-| Field | Type | Required | Description |
-| ----- | ---- | ------------ | ------------------------ |
-| param 1 | _type_ | yes/no | 1-2 sentence description of the parameter, including any defaults if any. |
-| param 2 | _type_ | yes/no | 1-2 sentence description of the parameter, including any defaults if any. |
-| param n | _type_ | yes/no | 1-2 sentence description of the parameter, including any defaults if any. |
-| `work_dir` | path | no | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
-
-> Include the optional param `work_dir` in the inputs accompanied by a warning of the potentials dangers of using the param. Update the warning if necessary.
+| Input Parameter | Required | Type | Description |
+|:----------------|:---------|:-----|:------------|
+| `dataset_id` | Yes | string | Dataset ID |
+| `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
+| `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
+| `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
+| `aligner` | Yes | string | Original aligner used to align input BAMs; formatted as \<aligner\>-\<aligner-version\> |
+| `cache_intermediate_pipeline_steps` | No | boolean | Set to true to enable process caching from Nextflow; defaults to false |
+| `is_emit_original_quals` | Yes | boolean | Set to true to emit original quality scores; false to omit |
+| `is_DOC_run` | Yes | boolean | Set to true to run GATK DepthOfCoverage (very time-consuming for large BAMs); false otherwise |
+| `parallelize_by_chromosome` | Yes | boolean | Whether the parallelize by chromosome or by scattering intervals |
+| `scatter_count` | Yes | integer | Number of intervals to divide into for parallelization |
+| `intervals` | Yes | path | Use all .list in inputs for WGS; Set to absolute path to targeted exome interval file (with .interval_list, .list, .intervals, or .bed suffix) |
+| `gatk_ir_compression` | No | integer | Compression level for BAMs output by IndelRealigner. Default: 0. Range: 0-9 |
+| `reference_fasta` | Yes | path | Absolute path to reference genome fasta file, e.g., `/hot/ref/reference/GRCh38-BI-20160721/Homo_sapiens_assembly38.fasta` |
+| `bundle_mills_and_1000g_gold_standard_indels_vcf_gz` | Yes | path | Absolute path to Mills & 1000G Gold Standard Indels file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz` |
+| `bundle_known_indels_vcf_gz` | Yes | path | Absolute path to known indels file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Homo_sapiens_assembly38.known_indels.vcf.gz` |
+| `bundle_v0_dbsnp138_vcf_gz` | Yes | path | Absolute path to dbsnp file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz` |
+| `bundle_contest_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 biallelic sites file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz` |
+| `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
+| `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
+| `metapipeline_delete_input_bams` | optional | boolean | Set to true to delete the input BAM files once the initial processing step is complete. **WARNING**: This option should NOT be used for individual runs of call-gSNP; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the `workDir`. |
+| `metapipeline_final_output_dir` | optional | string | Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. **WARNING**: This option should not be used for individual runs of call-gSNP; it's intended for metapipeline-DNA to optimize disk space usage. |
 
 ---
 
 ## Outputs
 
-<!-- List and describe the final output(s) of the pipeline. -->
-
 | Output | Description |
-| ------------ | ------------------------ |
-| ouput 1 | 1 - 2 sentence description of the output. |
-| ouput 2 | 1 - 2 sentence description of the output. |
-| ouput n | 1 - 2 sentence description of the output. |
-
----
-
-## Testing and Validation
-
-### Test Data Set
-
-A 2-3 sentence description of the test data set(s) used to validate and test this pipeline. If possible, include references and links for how to access and use the test dataset
-
-### Validation <version number\>
-
- Input/Output | Description | Result  
- | ------------ | ------------------------ | ------------------------ |
-| metric 1 | 1 - 2 sentence description of the metric | quantifiable result |
-| metric 2 | 1 - 2 sentence description of the metric | quantifiable result |
-| metric n | 1 - 2 sentence description of the metric | quantifiable result |
-
-- [Reference/External Link/Path 1 to any files/plots or other validation results](<link>)
-- [Reference/External Link/Path 2 to any files/plots or other validation results](<link>)
-- [Reference/External Link/Path n to any files/plots or other validation results](<link>)
-
-### Validation Tool
-
-Included is a template for validating your input files. For more information on the tool check out: https://github.com/uclahs-cds/tool-validate-nf
-
----
-
-## References
-
-1. [Reference 1](<links-to-papers/external-code/documentation/metadata/other-repos/or-anything-else>)
-2. [Reference 2](<links-to-papers/external-code/documentation/metadata/other-repos/or-anything-else>)
-3. [Reference n](<links-to-papers/external-code/documentation/metadata/other-repos/or-anything-else>)
+|:-------|:------------|
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam` | Post-processes BAM |
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam.sha512` | Post-processes BAM SHA512 checksum |
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam.bai` | Post-processes BAM index |
+| `<aligner>_<GATK>_<dataset_id>_<sample_id>.bam.bai.sha512` | Post-processes BAM index SHA512 checksum |
+| `report.html`, `timeline.html` and `trace.txt` | Nextflow report, timeline and trace files |
+| `*.command.*` | Process specific logging files created by nextflow |
 
 ---
 
 ## Discussions
 
-- [Issue tracker](<link-to-repo-issues-page>) to report errors and enhancement ideas.
-- Discussions can take place in [<pipeline> Discussions](<link-to-repo-discussions-page>)
-- [<pipeline> pull requests](<link-to-repo-pull-requests>) are also open for discussion
+- [Issue tracker](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/issues) to report errors and enhancement ideas.
+- Discussions can take place in [recalibrate-BAM Discussions](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/discussions)
+- [recalibrate-BAM pull requests](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/pulls) are also open for discussion
 
 ---
 
@@ -143,15 +159,21 @@ Included is a template for validating your input files. For more information on 
 
 > Update link to repo-specific URL for GitHub Insights Contributors page.
 
-Please see list of [Contributors](https://github.com/uclahs-cds/template-NextflowPipeline/graphs/contributors) at GitHub.
+Please see list of [Contributors](https://github.com/uclahs-cds/pipeline-recalibrate-BAM/graphs/contributors) at GitHub.
 
 ---
 
+## References
+
+--
+
 ## License
 
-[pipeline name] is licensed under the GNU General Public License version 2. See the file LICENSE for the terms of the GNU GPL license.
+Authors: Yash Patel (YashPatel@mednet.ucla.edu), Shu Tao (shutao@mednet.ucla.edu), Stefan Eng (stefaneng@mednet.ucla.edu)
 
-<one line to give the program's name and a brief idea of what it does.>
+Recalibrate-BAM is licensed under the GNU General Public License version 2. See the file LICENSE for the terms of the GNU GPL license.
+
+Recalibrate-BAM takes BAM files and utilizes GATK to perform indel realignment and BQSR.
 
 Copyright (C) 2023 University of California Los Angeles ("Boutros Lab") All rights reserved.
 
