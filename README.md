@@ -1,14 +1,14 @@
 # recalibrate-BAM
 
-1. [Overview](#Overview)
-2. [How To Run](#How-To-Run)
-3. [Flow Diagram](#Flow-Diagram)
-4. [Pipeline Steps](#Pipeline-Steps)
-5. [Inputs](#Inputs)
-5. [Outputs](#Outputs)
-6. [Discussions](#Discussions)
-7. [Contributors](#Contributors)
-8. [References](#References)
+1. [Overview](#overview)
+2. [How To Run](#how-to-run)
+3. [Flow Diagram](#flow-diagram)
+4. [Pipeline Steps](#pipeline-steps)
+5. [Inputs](#inputs)
+5. [Outputs](#outputs)
+6. [Discussions](#discussions)
+7. [Contributors](#contributors)
+8. [References](#references)
 
 ## Overview
 
