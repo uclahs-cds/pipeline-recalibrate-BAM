@@ -55,6 +55,7 @@ process run_BaseRecalibrator_GATK {
     path(bundle_known_indels_vcf_gz_tbi)
     path(bundle_v0_dbsnp138_vcf_gz)
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
+    path(intervals)
     tuple path(indelrealigned_bams), path(indelrealigned_bams_bai), val(sample_id)
 
     output:
@@ -63,7 +64,7 @@ process run_BaseRecalibrator_GATK {
 
     script:
     all_ir_bams = indelrealigned_bams.collect{ "--input '${it}'" }.join(' ')
-    targeted_options = params.is_targeted ? "--intervals ${params.intervals} --interval-padding 100" : ""
+    targeted_options = params.is_targeted ? "--intervals ${intervals} --interval-padding 100" : ""
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
@@ -181,6 +182,8 @@ workflow recalibrate_base {
         }
         .set{ input_ch_base_recalibrator }
 
+    base_recalibrator_intervals = (params.is_targeted) ? params.intervals : "/scratch/NO_FILE.interval_list"
+
     run_BaseRecalibrator_GATK(
         params.reference_fasta,
         "${params.reference_fasta}.fai",
@@ -191,6 +194,7 @@ workflow recalibrate_base {
         "${params.bundle_known_indels_vcf_gz}.tbi",
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        base_recalibrator_intervals,
         input_ch_base_recalibrator
     )
 
