@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [1.0.0-rc.1] - 2023-07-27
 ### [Added]
 - Basic configuration setup
 - Input YAML templates and handling
