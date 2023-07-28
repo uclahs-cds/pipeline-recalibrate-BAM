@@ -134,7 +134,7 @@ For normal-only or tumour-only samples, exclude the fields for the other state.
 | `base_resource_update` | optional | namespace | Namespace of parameters to update base resource allocations in the pipeline. Usage and structure are detailed in `template.config` and below. |
 
 #### Base resource allocation updaters
-To update the base resource (cpus or memory) allocations for processes, use the following structure and add the necessary parts
+To update the base resource (cpus or memory) allocations for processes, use the following structure and add the necessary parts. The default allocations can be found in the [node-specific config files](./config/)
 ```Nextflow
 base_resource_update {
     memory = [
