@@ -131,6 +131,38 @@ For normal-only or tumour-only samples, exclude the fields for the other state.
 | `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
 | `metapipeline_delete_input_bams` | optional | boolean | Set to true to delete the input BAM files once the initial processing step is complete. **WARNING**: This option should NOT be used for individual runs of call-gSNP; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the `workDir`. |
 | `metapipeline_final_output_dir` | optional | string | Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. **WARNING**: This option should not be used for individual runs of call-gSNP; it's intended for metapipeline-DNA to optimize disk space usage. |
+| `base_resource_update` | optional | namespace | Namespace of parameters to update base resource allocations in the pipeline. Usage and structure are detailed in `template.config` and below. |
+
+#### Examples of base resource allocation updaters
+> **Note** Resource updates will be applied in the order they're provided so if a process is included twice in the memory list, it will be updated twice in the order it's given.
+- To double memory of all processes:
+```Nextflow
+base_resource_update {
+    memory = [
+        [[], 2]
+    ]
+}
+```
+- To double memory for `run_ApplyBQSR_GATK` and triple memory for `run_validate_PipeVal` and `run_IndelRealigner_GATK`:
+```Nextflow
+base_resource_update {
+    memory = [
+        ['run_ApplyBQSR_GATK', 2],
+        [['run_validate_PipeVal', 'run_IndelRealigner_GATK'], 3]
+    ]
+}
+```
+- To double CPUs and memory for `run_ApplyBQSR_GATK` and double memory for `run_validate_PipeVal`:
+```Nextflow
+base_resource_update {
+    cpus = [
+        ['run_ApplyBQSR_GATK', 2]
+    ]
+    memory = [
+        [['run_ApplyBQSR_GATK', 'run_validate_PipeVal'], 2]
+    ]
+}
+```
 
 ---
 
