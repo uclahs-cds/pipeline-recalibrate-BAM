@@ -85,6 +85,16 @@ metapipeline_final_output_dir:
   type: 'String'
   required: false
   help: 'Directory containing final outputs to check before input deletion'
+metapipeline_states_to_delete:
+  type: 'List'
+  required: true
+  help: 'List of states for which to delete input BAMs'
+  default:
+    - 'normal'
+    - 'tumor'
+  choice:
+    - 'normal'
+    - 'tumor'
 base_resource_update:
   type: 'ResourceUpdateNamespace'
   required: false

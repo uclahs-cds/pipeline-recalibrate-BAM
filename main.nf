@@ -153,6 +153,7 @@ workflow {
     *   Input file deletion
     */
     input_ch_samples_with_index
+        .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
         .map{ sample -> sample.path }
         .flatten()
         .unique()
