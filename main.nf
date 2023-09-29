@@ -64,6 +64,7 @@ include {
     run_DepthOfCoverage_GATK
 } from './module/summary-qc.nf'
 include { delete_input } from './module/delete-input.nf'
+include { sanitize_string } from './external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -214,13 +215,13 @@ workflow {
 
     input_ch_samples_with_index
         .filter{ it.sample_type == 'normal' }
-        .map{ it -> [it.id] }
+        .map{ it -> [sanitize_string(it.id)] }
         .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
         .set{ normal_pileupsummaries }
 
     input_ch_samples_with_index
         .filter{ it.sample_type == 'tumor' }
-        .map{ it -> [it.id] }
+        .map{ it -> [sanitize_string(it.id)] }
         .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
         .set{ tumor_pileupsummaries }
 
