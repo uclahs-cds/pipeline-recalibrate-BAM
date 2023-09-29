@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [1.0.0-rc.4] - 2023-09-29
 ### [Fixed]
 - Resource updater to allow update for all processes
 - Channel handling to save contamintion estimate files
