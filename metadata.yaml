@@ -4,5 +4,5 @@ description: "Nextflow pipeline to perform Indel Realignment and Base Quality Sc
 maintainers: "Boutros Lab Infrastructure <BoutrosLabInfrastructure@mednet.ucla.edu>"
 languages: ["Nextflow", "Docker"]
 dependencies: ["Java", "Nextflow", "Docker"]
-references: "https://confluence.mednet.ucla.edu/display/BOUTROSLAB/Guide+to+Nextflow"
+references: "https://uclahs-cds.atlassian.net/wiki/spaces/BOUTROSLAB/pages/3189620/Guide+to+Nextflow"
 tools: []
