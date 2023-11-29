@@ -1,8 +1,8 @@
 ---
 global:
   temp_dir: test/work
-  remove_temp: false
-  clean_logs: false
+  remove_temp: true
+  clean_logs: true
   nf_config: test/nftest.config
 
 cases:
