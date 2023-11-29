@@ -50,7 +50,7 @@ process run_MergeSamFiles_Picard {
     path(bams), emit: output_ch_deletion
 
     script:
-    all_bams = bams.collect{ "-INPUT '$it'" }.join(' ')
+    all_bams = bams.collect{ "-INPUT '$it'" }.toSorted().join(' ')
     additional_information = (params.parallelize_by_chromosome) ?
         "" :
         "realigned_recalibrated_merged"
