@@ -4,34 +4,32 @@
 
 ### Closes #...
 
-## Testing
+## Testing Results
 
-### NFTest Results
+<!-- If you did not run NFTest, please justify _why_ you feel your changes
+     don't need to be tested. -->
 
-<!-- Please include the last 10 lines of your NFTest logfile in the code block
-     below - you can collect those by modifying the `tail` command with the name
-     of your branch and the relevant logfile.
+- NFTest
+  - log:      /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/unreleased/\<branchname\>/log-nftest-\<datestamp\>.log
+  - cases:    default set <!-- update this if you made any changes to nftest.yml or ran default disabled test cases explicitly -->
 
-     Include the full path to the NFTest log file.
-
-     If you did not run NFTest, please justify _why_ you feel your changes
-     don't need to be tested.
-     -->
-
-```console
-$ tail /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/unreleased/<branchname>/log-nftest-<datestamp>.log
-
-... last 10 lines of NFTest output here ...
-```
-
-### Other Test Results
-
-<!-- Include any non-NFTest test details here. If you have modified anything
-     that is is not tested by NFTest, please detail:
-       * How you tested it
-       * How others can test it (including paths to config and YAML files)
-       * Why you are confident in your test results
--->
+<!--
+    Include any non-NFTest test details here, using the "Additional Case"
+    template below as appropriate. Please make sure that a reviewer can
+    understand:
+    * How you tested the pipeline
+    * How others can test it (including paths to config and YAML files)
+    * How the results demonstrate the changes in this PR. Examples of this
+      might include:
+        * The run completed successfully, so nothing was broken
+        * An output file changed (this might require two pipeline runs, before
+          and after your changes, to demonstrate the difference)
+    -->
+- Additional Case 1
+  - sample:    <!-- e.g. A-mini S2.T-1, A-mini S2.T-n1 -->
+  - input csv: <!-- path/to/input.csv -->
+  - config:    <!-- path/to/xxx.config -->
+  - output:    <!-- path/to/output -->
 
 # Checklist
 <!-- Please read each of the following items and confirm by replacing the [ ] with a [X] -->
