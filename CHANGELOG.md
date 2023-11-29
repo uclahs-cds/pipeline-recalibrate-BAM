@@ -8,6 +8,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+### [Added]
+- Sort BAMs before merging for deterministic result
+- Add NFTest case
 
 ---
 
