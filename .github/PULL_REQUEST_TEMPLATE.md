@@ -1,6 +1,5 @@
 # Description
-<!-- Briefly describe the changes included in this pull request and the paths
-     to the test cases below starting with 'Closes #...' if appropriate -->
+<!-- Briefly describe the changes included in this pull request, starting with 'Closes #... if appropriate.  -->
 
 ### Closes #...
 
