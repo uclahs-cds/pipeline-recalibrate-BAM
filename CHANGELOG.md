@@ -9,7 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 ### [Added]
-- Sort BAMs before merging for deterministic result
+- Sort BAMs before merging for consistent order of output BAM @PG header lines
 - Add NFTest case
 
 ---
