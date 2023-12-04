@@ -52,7 +52,7 @@ python submit_nextflow_pipeline.py \
 Split the reference genome into [intervals for parallel processing](https://gatk.broadinstitute.org/hc/en-us/articles/4414602449435-SplitIntervals). If `params.parallelize_by_chromosome` is set then the genome will be split by chromosome, otherwise it will be split into up to `params.scatter_count` intervals.
 
 ### 2. Realign indels
-Generate indel realignment targets and realign indels per interval.
+Generate [indel realignment targets](https://rawcdn.githack.com/broadinstitute/gatk-docs/8fcf44bb0686f2f7d442aade181ff6ed508a97de/gatk3-tooldocs/3.7-0/org_broadinstitute_gatk_tools_walkers_indels_RealignerTargetCreator.html) and [realign indels](https://rawcdn.githack.com/broadinstitute/gatk-docs/8fcf44bb0686f2f7d442aade181ff6ed508a97de/gatk3-tooldocs/3.7-0/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.html) per interval.
 
 ### 3. Generate BQSR (Base Quality Score Recalibration)
 Assess how sequencing errors correlate with four covariates (assigned quality score, read group, machine cycle producing this base, and current and immediately upstream base) and output [base quality score recalibration table](https://gatk.broadinstitute.org/hc/en-us/articles/4414594385563-BaseRecalibrator).
