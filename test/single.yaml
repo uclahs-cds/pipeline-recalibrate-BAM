@@ -1,0 +1,6 @@
+---
+patient_id: TWGSAMIN000001
+input:
+  BAM:
+    tumor:
+      - "/hot/resource/SMC-HET/tumours/A-mini/bams/n1/output/S2.T-n1.bam"

@@ -1,0 +1,26 @@
+---
+global:
+  temp_dir: test/work
+  remove_temp: true
+  clean_logs: true
+  nf_config: test/nftest.config
+
+cases:
+  - name: A-mini-n2
+    nf_script: ./main.nf
+    params_file: ./test/single.yaml
+    skip: false
+    verbose: true
+    asserts:
+      - actual: recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/GATK-4.2.4.1/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam
+        expect: /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam
+        method: md5
+      - actual: recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/GATK-4.2.4.1/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam.bai
+        expect: /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam.bai
+        method: md5
+      - actual: recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/GATK-4.2.4.1/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam.sha512
+        expect: /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam.sha512
+        method: md5
+      - actual: recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/GATK-4.2.4.1/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam.bai.sha512
+        expect: /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam.bai.sha512
+        method: md5
