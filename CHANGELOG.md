@@ -11,6 +11,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### [Added]
 - Sort BAMs before merging for consistent order of output BAM @PG header lines
 - Add NFTest case
+- Add new flow diagram to README
+- Add additional details to Pipeline Steps section of README
 
 ---
 

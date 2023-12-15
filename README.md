@@ -22,7 +22,7 @@ This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](htt
 
 1. Update the params section of the .config file ([Example config](config/template.config)).
 
-2. Update the YAML.
+2. Update the YAML ([Template YAMLs](input/)).
 
 3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
 
@@ -42,41 +42,44 @@ python submit_nextflow_pipeline.py \
 
 ## Flow Diagram
 
-![call-gSNP flow diagram](call-gSNP-DSL2.png)
+![recalibrate-BAM flow diagram](docs/recalibrate-bam-flow.svg)
 
 ---
 
 ## Pipeline Steps
 
-### 1. Split genome or target intervals into sub-intervals (either scattered or by chromosome) for parallelization
-Use the input target intervals or the whole genome intervals and split them into sub-intervals for parallel processing.
+### 1. Split genome into sub-intervals for parallelization
+Split the reference genome into [intervals for parallel processing](https://gatk.broadinstitute.org/hc/en-us/articles/4414602449435-SplitIntervals). If `params.parallelize_by_chromosome` is set then the genome will be split by chromosome, otherwise it will be split into up to `params.scatter_count` intervals.
 
-### 2. Realign Indels
-Generate indel realignment targets and realign indels.
+### 2. Realign indels
+Generate [indel realignment targets](https://rawcdn.githack.com/broadinstitute/gatk-docs/8fcf44bb0686f2f7d442aade181ff6ed508a97de/gatk3-tooldocs/3.7-0/org_broadinstitute_gatk_tools_walkers_indels_RealignerTargetCreator.html) and [realign indels](https://rawcdn.githack.com/broadinstitute/gatk-docs/8fcf44bb0686f2f7d442aade181ff6ed508a97de/gatk3-tooldocs/3.7-0/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.html) per interval.
 
 ### 3. Generate BQSR (Base Quality Score Recalibration)
-Assess how sequencing errors correlate with four covariates (assigned quality score, read group the read belongs, machine cycle producing this base, and current and immediately upstream base), and output base quality score recalibration table.
+Assess how sequencing errors correlate with four covariates (assigned quality score, read group, machine cycle producing this base, and current and immediately upstream base) and output [base quality score recalibration table](https://gatk.broadinstitute.org/hc/en-us/articles/4414594385563-BaseRecalibrator).
 
 ### 4. Apply BQSR per split interval in parallel
-Apply the recalibration per sample and reheader output as necessary.
+[Apply the base quality score recalibration](https://gatk.broadinstitute.org/hc/en-us/articles/4414594339611-ApplyBQSR) to each interval and reheader output as necessary.
 
 ### 5. Merge interval-level BAMs
-Merge BAMs from each interval to generate whole sample BAM.
+[Merge BAMs](https://gatk.broadinstitute.org/hc/en-us/articles/4414594413083-MergeSamFiles-Picard-) from each interval to generate a whole sample BAM.
 
-### 6. Deduplicate BAM
-In the case of scattered intervals, run a deduplication process to remove reads duplicated dur to overlap on interval splitting sites.
+#### 5a. Deduplicate BAM
+If `params.parallelize_by_chromosome` is not set, run a deduplication process to remove reads duplicated due to overlap on interval splitting sites.
+
+### 6. Index BAM file
+Generate a [BAI index file](http://www.htslib.org/doc/1.17/samtools-index.html) for fast random access of the whole sample BAM.
 
 ### 7. Get pileup summaries
-Summarizes counts of reads that support reference, alternate and other alleles for given sites. Results will be used in the next Calculate Contamination step.
+Tabulate [pileup metrics](https://gatk.broadinstitute.org/hc/en-us/articles/4414586785947-GetPileupSummaries) for inferring contamination. Summarize counts of reads that support reference, alternate and other alleles for given sites.
 
 ### 8. Calculate contamination
-Calculates the fraction of reads coming from cross-sample contamination, given results from Step 8. Generates a tumor segmentation file.
+Calculates the fraction of reads coming from [cross-sample contamination](https://gatk.broadinstitute.org/hc/en-us/articles/4414586751771-CalculateContamination), given results from Step 7. For paired samples, generates an additional output table containing segmentation of the tumor by minor allele fraction.
 
 ### 9.	DepthOfCoverage
-Calculate depth of coverage using the whole sample BAM from step 7.
+If `params.is_DOC_run` is set, generate [coverage summary information](https://gatk.broadinstitute.org/hc/en-us/articles/4414586842523-DepthOfCoverage-BETA-) for the whole sample BAM from step 5, partitioned by sample, read group, and library.
 
 ### 10. Generate sha512 checksum
-Generate sha512 checksum for final BAMs.
+Generate sha512 checksum for final BAM and BAI files.
 
 ---
 
