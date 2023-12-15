@@ -42,7 +42,7 @@ python submit_nextflow_pipeline.py \
 
 ## Flow Diagram
 
-![recalibrate-BAM flow diagram](docs/recalibrate-BAM.png)
+![recalibrate-BAM flow diagram](docs/recalibrate-bam-flow.svg)
 
 ---
 
