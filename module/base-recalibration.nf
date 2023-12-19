@@ -56,6 +56,7 @@ process run_BaseRecalibrator_GATK {
     path(bundle_v0_dbsnp138_vcf_gz)
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
     path(intervals)
+    path(recal_tables)
     tuple path(indelrealigned_bams), path(indelrealigned_bams_bai), val(sample_id)
 
     output:
@@ -67,18 +68,21 @@ process run_BaseRecalibrator_GATK {
     targeted_options = params.is_targeted ? "--intervals ${intervals} --interval-padding 100" : ""
     """
     set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
-        BaseRecalibrator \
-        ${all_ir_bams} \
-        --reference ${reference_fasta} \
-        --verbosity INFO \
-        --known-sites ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
-        --known-sites ${bundle_known_indels_vcf_gz} \
-        --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
-        --output ${sample_id}_recalibration_table.grp \
-        ${targeted_options} \
-        --read-filter SampleReadFilter \
-        --sample ${sample_id}
+    if [ ! -f ${sample_id}_recalibration_table.grp ]
+    then
+        gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+            BaseRecalibrator \
+            ${all_ir_bams} \
+            --reference ${reference_fasta} \
+            --verbosity INFO \
+            --known-sites ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
+            --known-sites ${bundle_known_indels_vcf_gz} \
+            --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
+            --output ${sample_id}_recalibration_table.grp \
+            ${targeted_options} \
+            --read-filter SampleReadFilter \
+            --sample ${sample_id}
+    fi
     """
 }
 
@@ -195,6 +199,7 @@ workflow recalibrate_base {
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         base_recalibrator_intervals,
+        params.input.recalibration_tables,
         input_ch_base_recalibrator
     )
 
