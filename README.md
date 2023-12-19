@@ -92,7 +92,10 @@ Generate sha512 checksum for final BAM and BAI files.
 | patient_id | string | Patient ID (will be standardized according to data storage structure in the near future) |
 | normal_BAM | path | Set to absolute path to normal BAM |
 | tumor_BAM | path | Set to absolute path to tumour BAM |
+| recalibration_table | path | (Optional) Absolute path to recalibration table |
 
+
+Input without pre-existing recalibration table(s):
 ```
 ---
 patient_id: "patient_id"
@@ -104,7 +107,23 @@ input:
     tumor:
       - "/absolute/path/to/BAM"
       - "/absolute/path/to/BAM"
+```
 
+Input with existing recalibration table(s):
+```
+---
+patient_id: "patient_id"
+input:
+  BAM:
+    normal:
+      - "/absolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+    tumor:
+      - "/absolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+  recalibration_tables:
+    - "/absolute/path/to/recalibration/table1"
+    - "/absolute/path/to/recalibration/table2"
 ```
 
 For normal-only or tumour-only samples, exclude the fields for the other state.
