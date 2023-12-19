@@ -1,0 +1,15 @@
+---
+patient_id: "patient_id"
+input:
+  BAM:
+    normal:
+      - "/absolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+    tumor:
+      - "/abosolute/path/to/BAM"
+      - "/absolute/path/to/BAM"
+  recalibration_tables:
+    - "/absolute/path/to/recalibration/table/sample1"
+    - "/absolute/path/to/recalibration/table/sample2"
+    - "/absolute/path/to/recalibration/table/sample3"
+    - "/absolute/path/to/recalibration/table/sample4"
