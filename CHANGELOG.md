@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Add NFTest case
 - Add new flow diagram to README
 - Add additional details to Pipeline Steps section of README
+- Remove local copies of `methods.check_limits` and `methods.set_env`
 
 ---
 
