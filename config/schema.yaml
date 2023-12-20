@@ -126,7 +126,7 @@ input:
           type: 'BAMEntryList'
           required: false
           help: 'Input tumor BAMs'
-    recalibration_tables:
+    recalibration_table:
       type: 'RecalibrationTableList'
       required: false
       allow_empty: false

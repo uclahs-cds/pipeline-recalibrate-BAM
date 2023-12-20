@@ -23,7 +23,7 @@ Current Configuration:
         bundle_v0_dbsnp138_vcf_gz: ${params.bundle_v0_dbsnp138_vcf_gz}
         bundle_contest_hapmap_3p3_vcf_gz: ${params.bundle_contest_hapmap_3p3_vcf_gz}
         intervals: ${(params.is_targeted) ?: 'WGS'}
-        recalibration_tables: ${params.input.recalibration_tables}
+        Recalibration tables: ${params.input.recalibration_table}
 
     - output: 
         output: ${params.output_dir}

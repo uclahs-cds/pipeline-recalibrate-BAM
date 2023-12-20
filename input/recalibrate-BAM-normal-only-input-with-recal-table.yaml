@@ -4,5 +4,5 @@ input:
   BAM:
     normal:
       - "/absolute/path/to/BAM"
-  recalibration_tables:
+  recalibration_table:
     - "/absolute/path/to/recalibration/table"

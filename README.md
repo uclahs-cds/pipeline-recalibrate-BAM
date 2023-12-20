@@ -121,7 +121,7 @@ input:
     tumor:
       - "/absolute/path/to/BAM"
       - "/absolute/path/to/BAM"
-  recalibration_tables:
+  recalibration_table:
     - "/absolute/path/to/recalibration/table1"
     - "/absolute/path/to/recalibration/table2"
 ```

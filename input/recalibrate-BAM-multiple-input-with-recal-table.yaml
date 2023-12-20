@@ -8,7 +8,7 @@ input:
     tumor:
       - "/abosolute/path/to/BAM"
       - "/absolute/path/to/BAM"
-  recalibration_tables:
+  recalibration_table:
     - "/absolute/path/to/recalibration/table/sample1"
     - "/absolute/path/to/recalibration/table/sample2"
     - "/absolute/path/to/recalibration/table/sample3"

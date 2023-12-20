@@ -199,7 +199,7 @@ workflow recalibrate_base {
         params.bundle_v0_dbsnp138_vcf_gz,
         "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
         base_recalibrator_intervals,
-        params.input.recalibration_tables,
+        params.input.recalibration_table,
         input_ch_base_recalibrator
     )
 
