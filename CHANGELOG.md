@@ -13,6 +13,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Add NFTest case
 - Add new flow diagram to README
 - Add additional details to Pipeline Steps section of README
+- Option to provide base recalibration tables for any subset of samples to skip `BaseRecalibrator`
+### [Changed]
+- Use modularized `set_env` function
 
 ---
 
