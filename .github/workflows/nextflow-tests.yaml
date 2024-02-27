@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - nwiltsie-nextflow-tests
+
   pull_request:
     branches:
       - main
