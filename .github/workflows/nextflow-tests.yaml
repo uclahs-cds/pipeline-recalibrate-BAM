@@ -10,7 +10,4 @@ on:
 
 jobs:
   nextflow_tests_job:
-    runs-on: ubuntu-latest
-    name: A job to run Nextflow config tests
-    steps:
-      - uses: uclahs-cds/tool-Nextflow-action/run-nextflow-tests@nwiltsie-nextflow-regression-action
+    uses: uclahs-cds/tool-Nextflow-action/run-nextflow-tests/workflow.yml@nwiltsie-nextflow-regression-action
