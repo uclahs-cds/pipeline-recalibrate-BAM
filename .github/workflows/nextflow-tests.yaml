@@ -10,4 +10,4 @@ on:
 
 jobs:
   nextflow_tests_job:
-    uses: uclahs-cds/tool-Nextflow-action/run-nextflow-tests/workflow.yml@nwiltsie-nextflow-regression-action
+    uses: uclahs-cds/tool-Nextflow-action/.github/workflows/nextflow-tests.yml@nwiltsie-nextflow-regression-action
