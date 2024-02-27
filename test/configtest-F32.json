@@ -1,0 +1,805 @@
+{
+  "config": [
+    "test/nftest.config"
+  ],
+  "params_file": "test/single.yaml",
+  "cpus": 32,
+  "memory_gb": 64,
+  "empty_files": [],
+  "mapped_files": [],
+  "nf_params": {
+    "output_dir": "/tmp/outputs"
+  },
+  "envvars": {
+    "SLURM_JOB_ID": "851543"
+  },
+  "mocks": {
+    "check_path": "",
+    "parse_bam_header": {
+      "read_group": [
+        {
+          "SM": "4915723"
+        }
+      ]
+    }
+  },
+  "dated_fields": [
+    "params.log_output_dir",
+    "report.file",
+    "timeline.file",
+    "trace.file"
+  ],
+  "expected_result": {
+    "docker": {
+      "all_group_ids": "$(for i in `id --real --groups`; do echo -n \"--group-add=$i \"; done)",
+      "enabled": true,
+      "runOptions": "-u $(id -u):$(id -g) $(for i in `id --real --groups`; do echo -n \"--group-add=$i \"; done)",
+      "uid_and_gid": "-u $(id -u):$(id -g)"
+    },
+    "manifest": {
+      "author": "Yash Patel",
+      "description": "Nextflow pipeline to perform Indel Realignment and Base Quality Score Recalibration",
+      "name": "recalibrate-BAM",
+      "version": "1.0.0-rc.4"
+    },
+    "params": {
+      "aligner": "BWA-MEM2-2.2.1",
+      "blcds_registered_dataset": false,
+      "bundle_contest_hapmap_3p3_vcf_gz": "/hot/ref/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz",
+      "bundle_known_indels_vcf_gz": "/hot/ref/tool-specific-input/GATK/GRCh38/Homo_sapiens_assembly38.known_indels.vcf.gz",
+      "bundle_mills_and_1000g_gold_standard_indels_vcf_gz": "/hot/ref/tool-specific-input/GATK/GRCh38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz",
+      "bundle_v0_dbsnp138_vcf_gz": "/hot/ref/tool-specific-input/GATK/GRCh38/resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz",
+      "cache_intermediate_pipeline_steps": false,
+      "dataset_id": "A-mini",
+      "docker_container_registry": "ghcr.io/uclahs-cds",
+      "docker_image_gatk": "broadinstitute/gatk:4.2.4.1",
+      "docker_image_gatk3": "ghcr.io/uclahs-cds/call-gsnp:GATK-3.7.0",
+      "docker_image_picard": "ghcr.io/uclahs-cds/picard:2.26.10",
+      "docker_image_pipeval": "ghcr.io/uclahs-cds/pipeval:4.0.0-rc.2",
+      "docker_image_samtools": "ghcr.io/uclahs-cds/samtools:1.17",
+      "gatk3_version": "GATK-3.7.0",
+      "gatk_command_mem_diff": "0",
+      "gatk_ir_compression": "1",
+      "gatk_version": "4.2.4.1",
+      "input": {
+        "BAM": {
+          "tumor": [
+            "/hot/resource/SMC-HET/tumours/A-mini/bams/n1/output/S2.T-n1.bam"
+          ]
+        },
+        "recalibration_table": [
+          "/scratch/851543/NO_FILE.grp"
+        ]
+      },
+      "intervals": "",
+      "is_DOC_run": false,
+      "is_emit_original_quals": true,
+      "is_targeted": false,
+      "log_output_dir": "/tmp/outputs/recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-rc.4-20240227T211907Z",
+      "max_cpus": "32",
+      "max_memory": "64 GB",
+      "metapipeline_delete_input_bams": false,
+      "metapipeline_states_to_delete": [
+        "normal",
+        "tumor"
+      ],
+      "min_cpus": "1",
+      "min_memory": "1 MB",
+      "output_dir": "/tmp/outputs",
+      "output_dir_base": "/tmp/outputs/recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/GATK-4.2.4.1",
+      "parallelize_by_chromosome": true,
+      "patient_id": "TWGSAMIN000001",
+      "picard_version": "2.26.10",
+      "pipeval_version": "4.0.0-rc.2",
+      "proc_resource_params": {
+        "deduplicate_records_SAMtools": {
+          "cpus": "2",
+          "memory": "57.6 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "extract_GenomeIntervals": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "remove_intermediate_files": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "remove_merged_BAM": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "remove_unmerged_BAMs": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "run_ApplyBQSR_GATK": {
+          "cpus": "1",
+          "memory": "2 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "4",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_BaseRecalibrator_GATK": {
+          "cpus": "1",
+          "memory": "57.6 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_CalculateContamination_GATK": {
+          "cpus": "1",
+          "memory": "28.8 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_DepthOfCoverage_GATK": {
+          "cpus": "1",
+          "memory": "28.8 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_GetPileupSummaries_GATK": {
+          "cpus": "1",
+          "memory": "28.8 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_IndelRealigner_GATK": {
+          "cpus": "4",
+          "memory": "6 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "4",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_MergeSamFiles_Picard": {
+          "cpus": "2",
+          "memory": "57.6 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_RealignerTargetCreator_GATK": {
+          "cpus": "4",
+          "memory": "6 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_SplitIntervals_GATK": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "run_index_SAMtools": {
+          "cpus": "1",
+          "memory": "2 GB",
+          "retry_strategy": {
+            "memory": {
+              "operand": "2",
+              "strategy": "exponential"
+            }
+          }
+        },
+        "run_validate_PipeVal": {
+          "cpus": "1",
+          "memory": "1 GB"
+        }
+      },
+      "reference_fasta": "/hot/ref/reference/GRCh38-BI-20160721/Homo_sapiens_assembly38.fasta",
+      "samples_to_process": [
+        {
+          "id": "4915723",
+          "path": "/hot/resource/SMC-HET/tumours/A-mini/bams/n1/output/S2.T-n1.bam",
+          "sample_type": "tumor"
+        }
+      ],
+      "samtools_version": "1.17",
+      "save_intermediate_files": false,
+      "scatter_count": "50",
+      "split_intervals_extra_args": "",
+      "ucla_cds": true,
+      "use_recal_tables": false,
+      "work_dir": "/scratch/851543"
+    },
+    "params_schema": {
+      "aligner": {
+        "help": "Aligner used to align input BAMs. Provided as <Aligner>-<Aligner-version>",
+        "required": true,
+        "type": "AlignerTool"
+      },
+      "base_resource_update": {
+        "elements": {
+          "cpus": {
+            "help": "List of CPU updates",
+            "required": false,
+            "type": "ResourceUpdateList"
+          },
+          "memory": {
+            "help": "List of memory updates",
+            "required": false,
+            "type": "ResourceUpdateList"
+          }
+        },
+        "help": "User-defined modifications for adjusting base resource allocations for processes",
+        "required": false,
+        "type": "ResourceUpdateNamespace"
+      },
+      "bundle_contest_hapmap_3p3_vcf_gz": {
+        "help": "Absolute path to ConEst HapMap 3p3 VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "bundle_known_indels_vcf_gz": {
+        "help": "Absolute path to known INDELs VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "bundle_mills_and_1000g_gold_standard_indels_vcf_gz": {
+        "help": "Absolute path to Mills and 1000g gold standard INDELs VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "bundle_v0_dbsnp138_vcf_gz": {
+        "help": "Absolute path to v0 dbSNP 138 VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "dataset_id": {
+        "help": "Dataset ID",
+        "required": true,
+        "type": "String"
+      },
+      "gatk_ir_compression": {
+        "choices": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "default": "1",
+        "help": "",
+        "required": false,
+        "type": "Integer"
+      },
+      "input": {
+        "elements": {
+          "BAM": {
+            "elements": {
+              "normal": {
+                "help": "Input normal BAMs",
+                "required": false,
+                "type": "BAMEntryList"
+              },
+              "tumor": {
+                "help": "Input tumor BAMs",
+                "required": false,
+                "type": "BAMEntryList"
+              }
+            },
+            "help": "Input BAMs for calling",
+            "required": true,
+            "type": "InputBAMNamespace"
+          },
+          "recalibration_table": {
+            "allow_empty": false,
+            "help": "List of any available recalibration tables",
+            "required": false,
+            "type": "RecalibrationTableList"
+          }
+        },
+        "help": "Input samples",
+        "required": true,
+        "type": "InputNamespace"
+      },
+      "intervals": {
+        "allow_empty": true,
+        "help": "Target intervals to process for DNA panel/targeted sequencing samples; leave empty for WGS",
+        "required": true,
+        "type": "String"
+      },
+      "is_DOC_run": {
+        "default": false,
+        "help": "Whether to run the DepthOfCoverage process, which is very time-consuming for large BAMs",
+        "required": true,
+        "type": "Bool"
+      },
+      "is_emit_original_quals": {
+        "default": true,
+        "help": "Whether to emit original quality scores after recalibration",
+        "required": true,
+        "type": "Bool"
+      },
+      "metapipeline_delete_input_bams": {
+        "default": false,
+        "help": "Whether to delete the input BAMs",
+        "required": true,
+        "type": "Bool"
+      },
+      "metapipeline_final_output_dir": {
+        "help": "Directory containing final outputs to check before input deletion",
+        "required": false,
+        "type": "String"
+      },
+      "metapipeline_states_to_delete": {
+        "choice": [
+          "normal",
+          "tumor"
+        ],
+        "default": [
+          "normal",
+          "tumor"
+        ],
+        "help": "List of states for which to delete input BAMs",
+        "required": true,
+        "type": "List"
+      },
+      "output_dir": {
+        "help": "Absolute path to output directory",
+        "mode": "w",
+        "required": true,
+        "type": "Path"
+      },
+      "patient_id": {
+        "help": "Patient ID",
+        "required": true,
+        "type": "String"
+      },
+      "reference_fasta": {
+        "help": "Absolute path to reference genome fasta",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "save_intermediate_files": {
+        "default": false,
+        "help": "Whether to save intermediate files",
+        "required": true,
+        "type": "Bool"
+      },
+      "scatter_count": {
+        "default": "50",
+        "help": "How many intervals to divide the genome into for parallelization",
+        "required": true,
+        "type": "Integer"
+      },
+      "split_intervals_extra_args": {
+        "allow_empty": true,
+        "help": "Extra arguments for interval splitting",
+        "required": false,
+        "type": "String"
+      }
+    },
+    "proc_name_keys": [
+      "withName:run_validate_PipeVal",
+      "withName:extract_GenomeIntervals",
+      "withName:run_SplitIntervals_GATK",
+      "withName:run_RealignerTargetCreator_GATK",
+      "withName:run_IndelRealigner_GATK",
+      "withName:run_BaseRecalibrator_GATK",
+      "withName:run_ApplyBQSR_GATK",
+      "withName:run_MergeSamFiles_Picard",
+      "withName:deduplicate_records_SAMtools",
+      "withName:run_index_SAMtools",
+      "withName:run_GetPileupSummaries_GATK",
+      "withName:run_CalculateContamination_GATK",
+      "withName:run_DepthOfCoverage_GATK",
+      "withName:remove_intermediate_files",
+      "withName:remove_unmerged_BAMs",
+      "withName:remove_merged_BAM"
+    ],
+    "proc_names": "[Ljava.lang.String;@dec0ded",
+    "process": {
+      "cache": false,
+      "containerOptions": {
+        "1": "--cpu-shares 1024 --cpus $task.cpus",
+        "2": "--cpu-shares 1024 --cpus $task.cpus",
+        "3": "--cpu-shares 1024 --cpus $task.cpus",
+        "closure": "--cpu-shares 1024 --cpus $task.cpus"
+      },
+      "cpus": {
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "closure": "closure()"
+      },
+      "errorStrategy": {
+        "1": "terminate",
+        "2": "terminate",
+        "3": "terminate",
+        "closure": "terminate"
+      },
+      "executor": "local",
+      "maxRetries": "1",
+      "memory": "64 GB",
+      "withLabel:process_high": {
+        "cpus": {
+          "1": "12",
+          "2": "12",
+          "3": "12",
+          "closure": "retry_updater(12, add, 0, $task.attempt, cpus)"
+        },
+        "memory": {
+          "1": "64 GB",
+          "2": "64 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(84 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withLabel:process_low": {
+        "cpus": {
+          "1": "2",
+          "2": "2",
+          "3": "2",
+          "closure": "retry_updater(2, add, 0, $task.attempt, cpus)"
+        },
+        "memory": {
+          "1": "3 GB",
+          "2": "6 GB",
+          "3": "12 GB",
+          "closure": "retry_updater(3 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withLabel:process_medium": {
+        "cpus": {
+          "1": "6",
+          "2": "6",
+          "3": "6",
+          "closure": "retry_updater(6, add, 0, $task.attempt, cpus)"
+        },
+        "memory": {
+          "1": "42 GB",
+          "2": "64 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(42 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:deduplicate_records_SAMtools": {
+        "cpus": "2",
+        "memory": {
+          "1": "57.6 GB",
+          "2": "64 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(57.6 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:extract_GenomeIntervals": {
+        "cpus": "1",
+        "memory": "1 GB"
+      },
+      "withName:remove_intermediate_files": {
+        "cpus": "1",
+        "memory": "1 GB"
+      },
+      "withName:remove_merged_BAM": {
+        "cpus": "1",
+        "memory": "1 GB"
+      },
+      "withName:remove_unmerged_BAMs": {
+        "cpus": "1",
+        "memory": "1 GB"
+      },
+      "withName:run_ApplyBQSR_GATK": {
+        "cpus": "1",
+        "memory": {
+          "1": "2 GB",
+          "2": "8 GB",
+          "3": "32 GB",
+          "closure": "retry_updater(2 GB, exponential, 4, $task.attempt, memory)"
+        }
+      },
+      "withName:run_BaseRecalibrator_GATK": {
+        "cpus": "1",
+        "memory": {
+          "1": "57.6 GB",
+          "2": "64 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(57.6 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_CalculateContamination_GATK": {
+        "cpus": "1",
+        "memory": {
+          "1": "28.8 GB",
+          "2": "57.6 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(28.8 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_DepthOfCoverage_GATK": {
+        "cpus": "1",
+        "memory": {
+          "1": "28.8 GB",
+          "2": "57.6 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(28.8 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_GetPileupSummaries_GATK": {
+        "cpus": "1",
+        "memory": {
+          "1": "28.8 GB",
+          "2": "57.6 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(28.8 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_IndelRealigner_GATK": {
+        "cpus": "4",
+        "memory": {
+          "1": "6 GB",
+          "2": "24 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(6 GB, exponential, 4, $task.attempt, memory)"
+        }
+      },
+      "withName:run_MergeSamFiles_Picard": {
+        "cpus": "2",
+        "memory": {
+          "1": "57.6 GB",
+          "2": "64 GB",
+          "3": "64 GB",
+          "closure": "retry_updater(57.6 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_RealignerTargetCreator_GATK": {
+        "cpus": "4",
+        "memory": {
+          "1": "6 GB",
+          "2": "12 GB",
+          "3": "24 GB",
+          "closure": "retry_updater(6 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_SplitIntervals_GATK": {
+        "cpus": "1",
+        "memory": "1 GB"
+      },
+      "withName:run_index_SAMtools": {
+        "cpus": "1",
+        "memory": {
+          "1": "2 GB",
+          "2": "4 GB",
+          "3": "8 GB",
+          "closure": "retry_updater(2 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_validate_PipeVal": {
+        "cpus": "1",
+        "memory": "1 GB"
+      }
+    },
+    "report": {
+      "enabled": true,
+      "file": "/tmp/outputs/recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-rc.4-20240227T211907Z/nextflow-log/report.html"
+    },
+    "timeline": {
+      "enabled": true,
+      "file": "/tmp/outputs/recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-rc.4-20240227T211907Z/nextflow-log/timeline.html"
+    },
+    "trace": {
+      "enabled": true,
+      "file": "/tmp/outputs/recalibrate-BAM-1.0.0-rc.4/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-rc.4-20240227T211907Z/nextflow-log/trace.txt"
+    },
+    "workDir": "/scratch/851543",
+    "yaml": {
+      "aligner": {
+        "help": "Aligner used to align input BAMs. Provided as <Aligner>-<Aligner-version>",
+        "required": true,
+        "type": "AlignerTool"
+      },
+      "base_resource_update": {
+        "elements": {
+          "cpus": {
+            "help": "List of CPU updates",
+            "required": false,
+            "type": "ResourceUpdateList"
+          },
+          "memory": {
+            "help": "List of memory updates",
+            "required": false,
+            "type": "ResourceUpdateList"
+          }
+        },
+        "help": "User-defined modifications for adjusting base resource allocations for processes",
+        "required": false,
+        "type": "ResourceUpdateNamespace"
+      },
+      "bundle_contest_hapmap_3p3_vcf_gz": {
+        "help": "Absolute path to ConEst HapMap 3p3 VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "bundle_known_indels_vcf_gz": {
+        "help": "Absolute path to known INDELs VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "bundle_mills_and_1000g_gold_standard_indels_vcf_gz": {
+        "help": "Absolute path to Mills and 1000g gold standard INDELs VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "bundle_v0_dbsnp138_vcf_gz": {
+        "help": "Absolute path to v0 dbSNP 138 VCF",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "dataset_id": {
+        "help": "Dataset ID",
+        "required": true,
+        "type": "String"
+      },
+      "gatk_ir_compression": {
+        "choices": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "default": "1",
+        "help": "",
+        "required": false,
+        "type": "Integer"
+      },
+      "input": {
+        "elements": {
+          "BAM": {
+            "elements": {
+              "normal": {
+                "help": "Input normal BAMs",
+                "required": false,
+                "type": "BAMEntryList"
+              },
+              "tumor": {
+                "help": "Input tumor BAMs",
+                "required": false,
+                "type": "BAMEntryList"
+              }
+            },
+            "help": "Input BAMs for calling",
+            "required": true,
+            "type": "InputBAMNamespace"
+          },
+          "recalibration_table": {
+            "allow_empty": false,
+            "help": "List of any available recalibration tables",
+            "required": false,
+            "type": "RecalibrationTableList"
+          }
+        },
+        "help": "Input samples",
+        "required": true,
+        "type": "InputNamespace"
+      },
+      "intervals": {
+        "allow_empty": true,
+        "help": "Target intervals to process for DNA panel/targeted sequencing samples; leave empty for WGS",
+        "required": true,
+        "type": "String"
+      },
+      "is_DOC_run": {
+        "default": false,
+        "help": "Whether to run the DepthOfCoverage process, which is very time-consuming for large BAMs",
+        "required": true,
+        "type": "Bool"
+      },
+      "is_emit_original_quals": {
+        "default": true,
+        "help": "Whether to emit original quality scores after recalibration",
+        "required": true,
+        "type": "Bool"
+      },
+      "metapipeline_delete_input_bams": {
+        "default": false,
+        "help": "Whether to delete the input BAMs",
+        "required": true,
+        "type": "Bool"
+      },
+      "metapipeline_final_output_dir": {
+        "help": "Directory containing final outputs to check before input deletion",
+        "required": false,
+        "type": "String"
+      },
+      "metapipeline_states_to_delete": {
+        "choice": [
+          "normal",
+          "tumor"
+        ],
+        "default": [
+          "normal",
+          "tumor"
+        ],
+        "help": "List of states for which to delete input BAMs",
+        "required": true,
+        "type": "List"
+      },
+      "output_dir": {
+        "help": "Absolute path to output directory",
+        "mode": "w",
+        "required": true,
+        "type": "Path"
+      },
+      "patient_id": {
+        "help": "Patient ID",
+        "required": true,
+        "type": "String"
+      },
+      "reference_fasta": {
+        "help": "Absolute path to reference genome fasta",
+        "mode": "r",
+        "required": true,
+        "type": "Path"
+      },
+      "save_intermediate_files": {
+        "default": false,
+        "help": "Whether to save intermediate files",
+        "required": true,
+        "type": "Bool"
+      },
+      "scatter_count": {
+        "default": "50",
+        "help": "How many intervals to divide the genome into for parallelization",
+        "required": true,
+        "type": "Integer"
+      },
+      "split_intervals_extra_args": {
+        "allow_empty": true,
+        "help": "Extra arguments for interval splitting",
+        "required": false,
+        "type": "String"
+      }
+    }
+  }
+}
