@@ -9,5 +9,16 @@
       "commit": "ee2aab3b41471014bb3267d6955e0ac74ab544b9",
       "date": "2024-02-28T10:51:21-08:00"
     }
+  },
+  {
+    "version": "v1.0.0-rc.1",
+    "title": "v1.0.0-rc.1",
+    "aliases": [
+      "release-candidate"
+    ],
+    "properties": {
+      "commit": "4f9e28e62a380be9571c1a84578ff6f8c9886d9f",
+      "date": "2023-07-27T11:47:03-07:00"
+    }
   }
 ]
