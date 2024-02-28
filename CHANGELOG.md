@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Add additional details to Pipeline Steps section of README
 - Option to provide base recalibration tables for any subset of samples to skip `BaseRecalibrator`
 - Output pipeline parameters to log directory using `store_object_as_json`
+- Add Action to deploy documentation to GitHub Pages
 
 ### [Changed]
 - Use modularized `set_env` function
