@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Inputs - pipeline-recalibrate-BAM</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../css/version-select.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Inputs";
+        var mkdocs_page_input_path = "inputs.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> pipeline-recalibrate-BAM
+        </a>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../overview/">Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../how-to-run/">How To Run</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../flow-diagram/">Flow Diagram</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../pipeline-steps/">Pipeline Steps</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Inputs</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#input-yaml">Input YAML</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#config">Config</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#base-resource-allocation-updaters">Base resource allocation updaters</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../outputs/">Outputs</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../discussions/">Discussions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../contributors/">Contributors</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../references/">References</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../license/">License</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">pipeline-recalibrate-BAM</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Inputs</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM/blob/ee2aab3b41471014bb3267d6955e0ac74ab544b9/README.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="inputs">Inputs</h2>
+<h3 id="input-yaml">Input YAML</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Field</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">patient_id</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Patient ID (will be standardized according to data storage structure in the near future)</td>
+</tr>
+<tr>
+<td style="text-align: left;">normal_BAM</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Set to absolute path to normal BAM</td>
+</tr>
+<tr>
+<td style="text-align: left;">tumor_BAM</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Set to absolute path to tumour BAM</td>
+</tr>
+<tr>
+<td style="text-align: left;">recalibration_table</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">(Optional) Absolute path to recalibration table</td>
+</tr>
+</tbody>
+</table>
+<p>Input without pre-existing recalibration table(s):</p>
+<pre><code>---
+patient_id: &quot;patient_id&quot;
+input:
+  BAM:
+    normal:
+      - &quot;/absolute/path/to/BAM&quot;
+      - &quot;/absolute/path/to/BAM&quot;
+    tumor:
+      - &quot;/absolute/path/to/BAM&quot;
+      - &quot;/absolute/path/to/BAM&quot;
+</code></pre>
+<p>Input with existing recalibration table(s):</p>
+<pre><code>---
+patient_id: &quot;patient_id&quot;
+input:
+  BAM:
+    normal:
+      - &quot;/absolute/path/to/BAM&quot;
+      - &quot;/absolute/path/to/BAM&quot;
+    tumor:
+      - &quot;/absolute/path/to/BAM&quot;
+      - &quot;/absolute/path/to/BAM&quot;
+  recalibration_table:
+    - &quot;/absolute/path/to/recalibration/table1&quot;
+    - &quot;/absolute/path/to/recalibration/table2&quot;
+</code></pre>
+<p>For normal-only or tumour-only samples, exclude the fields for the other state.</p>
+<h3 id="config">Config</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Input Parameter</th>
+<th style="text-align: left;">Required</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>dataset_id</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Dataset ID</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>blcds_registered_dataset</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Set to true when using BLCDS folder structure; use false for now</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_dir</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Need to set if <code>blcds_registered_dataset = false</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>save_intermediate_files</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>aligner</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Original aligner used to align input BAMs; formatted as \<aligner>-\<aligner-version></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cache_intermediate_pipeline_steps</code></td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Set to true to enable process caching from Nextflow; defaults to false</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_emit_original_quals</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Set to true to emit original quality scores; false to omit</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_DOC_run</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Set to true to run GATK DepthOfCoverage (very time-consuming for large BAMs); false otherwise</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>parallelize_by_chromosome</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Whether the parallelize by chromosome or by scattering intervals</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>scatter_count</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">integer</td>
+<td style="text-align: left;">Number of intervals to divide into for parallelization</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>intervals</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Use all .list in inputs for WGS; Set to absolute path to targeted exome interval file (with .interval_list, .list, .intervals, or .bed suffix)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gatk_ir_compression</code></td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">integer</td>
+<td style="text-align: left;">Compression level for BAMs output by IndelRealigner. Default: 0. Range: 0-9</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reference_fasta</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Absolute path to reference genome fasta file, e.g., <code>/hot/ref/reference/GRCh38-BI-20160721/Homo_sapiens_assembly38.fasta</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_mills_and_1000g_gold_standard_indels_vcf_gz</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Absolute path to Mills &amp; 1000G Gold Standard Indels file, e.g., <code>/hot/ref/tool-specific-input/GATK/GRCh38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_known_indels_vcf_gz</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Absolute path to known indels file, e.g., <code>/hot/ref/tool-specific-input/GATK/GRCh38/Homo_sapiens_assembly38.known_indels.vcf.gz</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_v0_dbsnp138_vcf_gz</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Absolute path to dbsnp file, e.g., <code>/hot/ref/tool-specific-input/GATK/GRCh38/resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_contest_hapmap_3p3_vcf_gz</code></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Absolute path to HapMap 3.3 biallelic sites file, e.g., <code>/hot/ref/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>work_dir</code></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is <code>/scratch</code> and should only be changed for testing/development. Changing this directory to <code>/hot</code> or <code>/tmp</code> can lead to high server latency and potential disk space limitations, respectively.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>docker_container_registry</code></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Registry containing tool Docker images. Default: <code>ghcr.io/uclahs-cds</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>metapipeline_delete_input_bams</code></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Set to true to delete the input BAM files once the initial processing step is complete. <strong>WARNING</strong>: This option should NOT be used for individual runs of call-gSNP; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the <code>workDir</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>metapipeline_final_output_dir</code></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. <strong>WARNING</strong>: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>metapipeline_states_to_delete</code></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;">list</td>
+<td style="text-align: left;">List of states for which to delete input BAMs. <strong>WARNING</strong>: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>base_resource_update</code></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;">namespace</td>
+<td style="text-align: left;">Namespace of parameters to update base resource allocations in the pipeline. Usage and structure are detailed in <code>template.config</code> and below.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="base-resource-allocation-updaters">Base resource allocation updaters</h4>
+<p>To update the base resource (cpus or memory) allocations for processes, use the following structure and add the necessary parts. The default allocations can be found in the <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM/blob/ee2aab3b41471014bb3267d6955e0ac74ab544b9/config">node-specific config files</a></p>
+<pre><code class="language-Nextflow">base_resource_update {
+    memory = [
+        [['process_name', 'process_name2'], &lt;multiplier for resource&gt;],
+        [['process_name3', 'process_name4'], &lt;different multiplier for resource&gt;]
+    ]
+    cpus = [
+        [['process_name', 'process_name2'], &lt;multiplier for resource&gt;],
+        [['process_name3', 'process_name4'], &lt;different multiplier for resource&gt;]
+    ]
+}
+</code></pre>
+<blockquote>
+<p><strong>Note</strong> Resource updates will be applied in the order they're provided so if a process is included twice in the memory list, it will be updated twice in the order it's given.</p>
+</blockquote>
+<p>Examples:</p>
+<ul>
+<li>To double memory of all processes:</li>
+</ul>
+<pre><code class="language-Nextflow">base_resource_update {
+    memory = [
+        [[], 2]
+    ]
+}
+</code></pre>
+<ul>
+<li>To double memory for <code>run_ApplyBQSR_GATK</code> and triple memory for <code>run_validate_PipeVal</code> and <code>run_IndelRealigner_GATK</code>:</li>
+</ul>
+<pre><code class="language-Nextflow">base_resource_update {
+    memory = [
+        ['run_ApplyBQSR_GATK', 2],
+        [['run_validate_PipeVal', 'run_IndelRealigner_GATK'], 3]
+    ]
+}
+</code></pre>
+<ul>
+<li>To double CPUs and memory for <code>run_ApplyBQSR_GATK</code> and double memory for <code>run_validate_PipeVal</code>:</li>
+</ul>
+<pre><code class="language-Nextflow">base_resource_update {
+    cpus = [
+        ['run_ApplyBQSR_GATK', 2]
+    ]
+    memory = [
+        [['run_ApplyBQSR_GATK', 'run_validate_PipeVal'], 2]
+    ]
+}
+</code></pre>
+<hr />
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../pipeline-steps/" class="btn btn-neutral float-left" title="Pipeline Steps"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../outputs/" class="btn btn-neutral float-right" title="Outputs">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../pipeline-steps/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../outputs/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../js/version-select.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
