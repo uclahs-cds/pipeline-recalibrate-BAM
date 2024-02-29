@@ -1,6 +1,5 @@
 # recalibrate-BAM
 
-
 1. [Overview](#overview)
 2. [How To Run](#how-to-run)
 3. [Flow Diagram](#flow-diagram)
