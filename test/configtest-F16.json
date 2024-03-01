@@ -6,8 +6,6 @@
   "params_file": "test/single.yaml",
   "cpus": 16,
   "memory_gb": 31,
-  "empty_files": [],
-  "mapped_files": [],
   "nf_params": {
     "output_dir": "/tmp/outputs"
   },
