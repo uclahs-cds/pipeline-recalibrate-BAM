@@ -1,4 +1,5 @@
 {
+  "nextflow_version": "23.10.0",
   "config": [
     "test/nftest.config"
   ],
