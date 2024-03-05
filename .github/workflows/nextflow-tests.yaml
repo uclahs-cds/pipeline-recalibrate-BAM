@@ -11,4 +11,4 @@ on:
 
 jobs:
   tests:
-    uses: uclahs-cds/tool-Nextflow-action/.github/workflows/nextflow-tests.yml@nwiltsie-nextflow-regression-action
+    uses: uclahs-cds/tool-Nextflow-action/.github/workflows/nextflow-tests.yml@main
