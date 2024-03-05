@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Option to provide base recalibration tables for any subset of samples to skip `BaseRecalibrator`
 - Output pipeline parameters to log directory using `store_object_as_json`
 - Add Action to deploy documentation to GitHub Pages
+- Add Nextflow configuration test action and two regression tests
 
 ### [Changed]
 - Use modularized `set_env` function
