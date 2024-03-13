@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [Unreleased]
+
+---
+
+## [1.0.0] - 2024-03-13
 ### [Added]
 - Sort BAMs before merging for consistent order of output BAM @PG header lines
 - Add NFTest case
