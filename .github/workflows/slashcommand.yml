@@ -8,3 +8,4 @@ jobs:
   slashCommandDispatch:
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/fix-tests') }}
     uses: uclahs-cds/tool-Nextflow-action/.github/workflows/nextflow-tests.yml@nwiltsie-autofix-tests
+    secrets: inherit
