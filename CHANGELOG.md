@@ -21,6 +21,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Output pipeline parameters to log directory using `store_object_as_json`
 - Add Action to deploy documentation to GitHub Pages
 - Add Nextflow configuration test action and two regression tests
+- Add requirements to README
 
 ### [Changed]
 - Use modularized `set_env` function
