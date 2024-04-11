@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### [Changed]
+- Update Nextflow configuration test workflows
+
 ---
 
 ## [1.0.0] - 2024-03-13
