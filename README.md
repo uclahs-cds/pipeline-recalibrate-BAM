@@ -28,13 +28,11 @@ This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](htt
 
 3. Download the submission script (submit_nextflow_pipeline.py) from [here](https://github.com/uclahs-cds/tool-submit-nf), and submit your pipeline below.
 
-> **Note**: Because this pipeline uses an image stored in the GitHub Container Registry, you must follow the steps listed in the [Docker Introduction](https://uclahs-cds.atlassian.net/wiki/spaces/BOUTROSLAB/pages/3223396/Container+Registry+-+GitHub+Packages) on Confluence to set up a PAT for your GitHub account and log into the registry on the cluster before running this pipeline.
-
 - YAML input
 ```
 python submit_nextflow_pipeline.py \
        --nextflow_script /path/to/main.nf \
-       --nextflow_config /path/to/call-gSNP.config \
+       --nextflow_config /path/to/call-recalibrate-bam.config \
        --nextflow_yaml /path/to/sample.yaml \
        --pipeline_run_name job_name \
        --partition_type <type> \
@@ -153,7 +151,7 @@ For normal-only or tumour-only samples, exclude the fields for the other state.
 | `bundle_contest_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 biallelic sites file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz` |
 | `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
 | `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
-| `metapipeline_delete_input_bams` | optional | boolean | Set to true to delete the input BAM files once the initial processing step is complete. **WARNING**: This option should NOT be used for individual runs of call-gSNP; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the `workDir`. |
+| `metapipeline_delete_input_bams` | optional | boolean | Set to true to delete the input BAM files once the initial processing step is complete. **WARNING**: This option should NOT be used for individual runs of recalibate-BAM; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the `workDir`. |
 | `metapipeline_final_output_dir` | optional | string | Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. **WARNING**: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage. |
 | `metapipeline_states_to_delete` | optional | list | List of states for which to delete input BAMs. **WARNING**: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage. |
 | `base_resource_update` | optional | namespace | Namespace of parameters to update base resource allocations in the pipeline. Usage and structure are detailed in `template.config` and below. |
@@ -248,7 +246,7 @@ Recalibrate-BAM is licensed under the GNU General Public License version 2. See 
 
 Recalibrate-BAM takes BAM files and utilizes GATK to perform indel realignment and BQSR.
 
-Copyright (C) 2023 University of California Los Angeles ("Boutros Lab") All rights reserved.
+Copyright (C) 2023-2024 University of California Los Angeles ("Boutros Lab") All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
