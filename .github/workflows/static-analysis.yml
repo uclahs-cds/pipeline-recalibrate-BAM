@@ -1,0 +1,18 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Eventually this will be renamed to static-analysis
+  CICD-base:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: uclahs-cds/tool-static-analysis@v1
