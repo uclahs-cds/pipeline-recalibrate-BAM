@@ -36,16 +36,12 @@ process run_MergeSamFiles_Picard {
         enabled: params.parallelize_by_chromosome,
         pattern: "${output_file_name}"
 
-    publishDir path: "${params.log_output_dir}/process-log",
-        pattern: ".command.*",
-        mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${sample_id}" }
 
     input:
     tuple val(sample_id), path(bams)
 
     output:
-    path(".command.*")
     tuple val(sample_id), path(output_file_name), emit: merged_bam
     path(bams), emit: output_ch_deletion
 
@@ -101,19 +97,15 @@ process deduplicate_records_SAMtools {
         mode: "copy",
         pattern: "${output_file_name}"
 
-    publishDir path: "${params.log_output_dir}/process-log",
-        pattern: ".command.*",
-        mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
-
     when:
     !params.parallelize_by_chromosome
+
+    ext log_dir_suffix: { "-${sample_id}" }
 
     input:
     tuple val(sample_id), path(bam)
 
     output:
-    path(".command.*")
     tuple val(sample_id), path(output_file_name), emit: dedup_bam
     path(bam), emit: bam_for_deletion
 
@@ -156,16 +148,12 @@ process run_index_SAMtools {
         mode: "copy",
         pattern: "*.bai"
 
-    publishDir path: "${params.log_output_dir}/process-log",
-        pattern: ".command.*",
-        mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${sample_id}" }
 
     input:
     tuple val(sample_id), path(bam)
 
     output:
-    path(".command.*")
     tuple val(sample_id), path(bam), path("${bam}.bai"), emit: indexed_out
 
     script:
