@@ -23,10 +23,7 @@ process run_GetPileupSummaries_GATK {
       mode: "copy",
       pattern: '*.table'
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${sample_id}" }
 
     input:
     path(reference_fasta)
@@ -38,7 +35,6 @@ process run_GetPileupSummaries_GATK {
     tuple val(sample_id), path(bam), path(bam_index)
 
     output:
-    path(".command.*")
     tuple val(sample_id), path("*getpileupsummaries.table"), emit: pileupsummaries
 
     script:
@@ -82,16 +78,12 @@ process run_CalculateContamination_GATK {
       mode: "copy",
       pattern: '*.table'
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${sample_id}" }
 
     input:
     tuple val(normal_id), path(normal_pileup), val(tumor_id), path(tumor_pileup), val(sample_type)
 
     output:
-    path(".command.*")
     path("*-tumor-segmentation.table")
     path("*_alone.table"), emit: contamination
     path("*_with-matched-normal.table"), emit: tumor_normal_matched_contamination optional true
@@ -148,10 +140,7 @@ process run_DepthOfCoverage_GATK {
       mode: "copy",
       pattern: '*_DOC*'
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${sample_id}" }
 
     input:
     path(reference_fasta)
@@ -161,7 +150,6 @@ process run_DepthOfCoverage_GATK {
     tuple val(sample_id), path(bam), path(bam_index)
 
     output:
-    path(".command.*")
     path("*_DOC*")
 
     when:
