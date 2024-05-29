@@ -168,7 +168,7 @@ process run_DepthOfCoverage_GATK {
     params.is_DOC_run
 
     script:
-    interval_options = all_intervals.collect{ "--intervals '\$(realpath ${it})'" }.join(' ')
+    interval_options = all_intervals.collect{ "--intervals \"\$(realpath ${it})\"" }.join(' ')
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
