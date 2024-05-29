@@ -41,6 +41,7 @@ process run_RealignerTargetCreator_GATK {
     path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
+    path(original_intervals)
     tuple path(bam), path(bam_index), val(interval_id), path(interval)
 
     output:
@@ -174,6 +175,7 @@ workflow realign_indels {
         "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
         params.bundle_known_indels_vcf_gz,
         "${params.bundle_known_indels_vcf_gz}.tbi",
+        "${params.getOrDefault('intervals', null) ?: params.work_dir + 'NO_FILE.bed'}",
         input_ch_rtc
         )
 
