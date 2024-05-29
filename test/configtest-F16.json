@@ -28,6 +28,14 @@
     "timeline.file",
     "trace.file"
   ],
+  "version_fields": [
+    "manifest.version",
+    "params.log_output_dir",
+    "params.output_dir_base",
+    "report.file",
+    "trace.file",
+    "timeline.file"
+  ],
   "expected_result": {
     "docker": {
       "all_group_ids": "$(for i in `id --real --groups`; do echo -n \"--group-add=$i \"; done)",
@@ -39,7 +47,7 @@
       "author": "Yash Patel, Nicholas Wiltsie",
       "description": "Nextflow pipeline to perform Indel Realignment and Base Quality Score Recalibration",
       "name": "recalibrate-BAM",
-      "version": "1.0.0"
+      "version": "VER.SI.ON"
     },
     "params": {
       "aligner": "BWA-MEM2-2.2.1",
@@ -74,7 +82,7 @@
       "is_DOC_run": false,
       "is_emit_original_quals": true,
       "is_targeted": false,
-      "log_output_dir": "/tmp/outputs/recalibrate-BAM-1.0.0/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-19970704T165655Z",
+      "log_output_dir": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/log-recalibrate-BAM-VER.SI.ON-19970704T165655Z",
       "max_cpus": "16",
       "max_memory": "31 GB",
       "metapipeline_delete_input_bams": false,
@@ -85,7 +93,7 @@
       "min_cpus": "1",
       "min_memory": "1 MB",
       "output_dir": "/tmp/outputs",
-      "output_dir_base": "/tmp/outputs/recalibrate-BAM-1.0.0/TWGSAMIN000001/GATK-4.2.4.1",
+      "output_dir_base": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/GATK-4.2.4.1",
       "parallelize_by_chromosome": true,
       "patient_id": "TWGSAMIN000001",
       "picard_version": "2.26.10",
@@ -414,15 +422,15 @@
     },
     "report": {
       "enabled": true,
-      "file": "/tmp/outputs/recalibrate-BAM-1.0.0/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-19970704T165655Z/nextflow-log/report.html"
+      "file": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/log-recalibrate-BAM-VER.SI.ON-19970704T165655Z/nextflow-log/report.html"
     },
     "timeline": {
       "enabled": true,
-      "file": "/tmp/outputs/recalibrate-BAM-1.0.0/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-19970704T165655Z/nextflow-log/timeline.html"
+      "file": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/log-recalibrate-BAM-VER.SI.ON-19970704T165655Z/nextflow-log/timeline.html"
     },
     "trace": {
       "enabled": true,
-      "file": "/tmp/outputs/recalibrate-BAM-1.0.0/TWGSAMIN000001/log-recalibrate-BAM-1.0.0-19970704T165655Z/nextflow-log/trace.txt"
+      "file": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/log-recalibrate-BAM-VER.SI.ON-19970704T165655Z/nextflow-log/trace.txt"
     },
     "workDir": "/scratch/851543"
   }

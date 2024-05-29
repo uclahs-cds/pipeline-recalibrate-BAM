@@ -65,7 +65,7 @@ process run_BaseRecalibrator_GATK {
 
     script:
     all_ir_bams = indelrealigned_bams.collect{ "--input '${it}'" }.join(' ')
-    targeted_options = params.is_targeted ? "--intervals ${intervals} --interval-padding 100" : ""
+    targeted_options = params.is_targeted ? "--intervals \"\$(realpath ${intervals})\" --interval-padding 100" : ""
     """
     set -euo pipefail
     if [ ! -f ${sample_id}_recalibration_table.grp ]

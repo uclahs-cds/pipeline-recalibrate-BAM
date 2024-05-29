@@ -42,7 +42,7 @@ process run_GetPileupSummaries_GATK {
     tuple val(sample_id), path("*getpileupsummaries.table"), emit: pileupsummaries
 
     script:
-    interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
+    interval_options = all_intervals.collect{ "--intervals \"\$(realpath ${it})\"" }.join(' ')
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
@@ -168,7 +168,7 @@ process run_DepthOfCoverage_GATK {
     params.is_DOC_run
 
     script:
-    interval_options = all_intervals.collect{ "--intervals '$it'" }.join(' ')
+    interval_options = all_intervals.collect{ "--intervals \"\$(realpath ${it})\"" }.join(' ')
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
