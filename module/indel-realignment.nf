@@ -175,7 +175,7 @@ workflow realign_indels {
         "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
         params.bundle_known_indels_vcf_gz,
         "${params.bundle_known_indels_vcf_gz}.tbi",
-        "${params.getOrDefault('intervals', null) ?: params.work_dir + 'NO_FILE.bed'}",
+        "${params.getOrDefault('intervals', null) ?: params.work_dir + '/NO_FILE.bed'}",
         input_ch_rtc
         )
 
