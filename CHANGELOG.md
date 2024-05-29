@@ -9,8 +9,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+---
+
+## [1.0.1] - 2024-05-29
 ### [Changed]
 - Update Nextflow configuration test workflows
+### [Fixed]
+- Resolve interval path for original given intervals to ensure the index file for intervals is found when present
 
 ---
 
