@@ -40,10 +40,7 @@ process run_BaseRecalibrator_GATK {
       mode: "copy",
       pattern: "*.grp"
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${sample_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${sample_id}" }
 
     input:
     path(reference_fasta)
@@ -60,7 +57,6 @@ process run_BaseRecalibrator_GATK {
     tuple path(indelrealigned_bams), path(indelrealigned_bams_bai), val(sample_id)
 
     output:
-    path(".command.*")
     tuple val(sample_id), path("${sample_id}_recalibration_table.grp"), emit: recalibration_table
 
     script:
@@ -115,10 +111,7 @@ process run_ApplyBQSR_GATK {
       enabled: params.save_intermediate_files,
       pattern: "*_recalibrated-*"
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${interval_id}" }
 
     input:
     path(reference_fasta)
@@ -133,7 +126,6 @@ process run_ApplyBQSR_GATK {
           path(recalibration_table)
 
     output:
-    path(".command.*")
     path("*_recalibrated-*"), emit: output_ch_apply_bqsr
     tuple path(indelrealigned_bam), path(indelrealigned_bam_index), emit: output_ch_deletion
 

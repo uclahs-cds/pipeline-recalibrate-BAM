@@ -16,16 +16,12 @@ process calculate_sha512 {
       pattern: "*.sha512",
       saveAs: { filename -> (filename.endsWith(".bai.sha512") && !filename.endsWith(".bam.bai.sha512")) ? "${file(file(filename).baseName).baseName}.bam.bai.sha512" : "${filename}"}
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}/${task.process.split(':')[-1]}-${task.index}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "/${task.process.split(':')[-1]}-${task.index}" }
 
     input:
     path(file_for_calc)
 
     output:
-    path(".command.*")
     path("*.sha512"), emit: sha512_sum
 
     script:
