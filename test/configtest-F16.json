@@ -241,6 +241,12 @@
       "work_dir": "/scratch/851543"
     },
     "process": {
+      "afterScript": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "closure": ""
+      },
       "cache": false,
       "containerOptions": {
         "1": "--cpu-shares 1024 --cpus $task.cpus",
@@ -261,6 +267,21 @@
         "closure": "terminate"
       },
       "executor": "local",
+      "ext": {
+        "capture_logs": true,
+        "commonAfterScript": {
+          "1": "",
+          "2": "",
+          "3": "",
+          "closure": ""
+        },
+        "log_dir": {
+          "1": "ext",
+          "2": "ext",
+          "3": "ext",
+          "closure": "ext"
+        }
+      },
       "maxRetries": "1",
       "memory": "31 GB",
       "withLabel:process_high": {
