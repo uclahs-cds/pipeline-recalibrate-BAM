@@ -12,8 +12,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ---
 
 ## [1.0.1] - 2024-05-29
+
 ### [Changed]
 - Update Nextflow configuration test workflows
+- Use `methods.setup_process_afterscript()` for process logs
+
 ### [Fixed]
 - Resolve interval path for original given intervals to ensure the index file for intervals is found when present
 
