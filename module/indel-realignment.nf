@@ -28,10 +28,7 @@ process run_RealignerTargetCreator_GATK {
       enabled: params.save_intermediate_files,
       pattern: "*_RTC_*.intervals"
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${interval_id}" }
 
     input:
     path(reference_fasta)
@@ -45,7 +42,6 @@ process run_RealignerTargetCreator_GATK {
     tuple path(bam), path(bam_index), val(interval_id), path(interval)
 
     output:
-    path(".command.*")
     tuple path(bam), path(bam_index), val(interval_id), path(interval), path("${output_rtc_intervals}"), emit: ir_targets
 
     script:
@@ -101,10 +97,7 @@ process run_IndelRealigner_GATK {
       pattern: "*indelrealigned*",
       saveAs: { filename -> (file(filename).getExtension() == "bai") ? "${file(filename).baseName}.bam.bai" : "${filename}" }
 
-    publishDir path: "${params.log_output_dir}/process-log",
-      pattern: ".command.*",
-      mode: "copy",
-      saveAs: { "${task.process.replace(':', '/')}-${interval_id}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${interval_id}" }
 
     input:
     path(reference_fasta)
@@ -117,7 +110,6 @@ process run_IndelRealigner_GATK {
     tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), path(target_intervals_RTC)
 
     output:
-    path(".command.*")
     tuple path("${output_filename}.bam"), path("${output_filename}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), emit: output_ch_indel_realignment
 
     script:

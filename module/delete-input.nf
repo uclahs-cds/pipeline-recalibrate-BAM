@@ -29,17 +29,13 @@ process check_deletion_status {
     container params.docker_image_pipeval
     containerOptions "--volume ${get_root_directory(params.metapipeline_final_output_dir)}:${get_root_directory(params.metapipeline_final_output_dir)}"
 
-    publishDir path: "${params.log_output_dir}/process-log",
-        pattern: ".command.*",
-        mode: "copy",
-        saveAs: { "${task.process.replace(':', '/')}-${task.index}/log${file(it).getName()}" }
+    ext log_dir_suffix: { "-${task.index}" }
 
     input:
     path(file_to_check)
 
     output:
     tuple path(file_to_check), env(DELETE_INPUT), emit: file_to_delete
-    path(".command.*")
 
     when:
     params.metapipeline_delete_input_bams
