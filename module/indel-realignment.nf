@@ -6,8 +6,8 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
         reference_fasta: path to reference genome fasta file
         reference_fasta_fai: path to index for reference fasta
         reference_fasta_dict: path to dictionary for reference fasta
-        bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
-        bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
+        bundle_mills_and_1000g_gold_standard_indels_vcf_gz: path to standard Mills and 1000 genomes variants
+        bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi: path to index file for Mills and 1000g variants
         bundle_known_indels_vcf_gz: path to set of known indels
         bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
         (bam, bam_index, interval_id, interval):  
@@ -34,8 +34,8 @@ process run_RealignerTargetCreator_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    path(bundle_mills_and_1000g_gold_standards_vcf_gz)
-    path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
+    path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz)
+    path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
     path(original_intervals)
@@ -56,7 +56,7 @@ process run_RealignerTargetCreator_GATK {
         --analysis_type RealignerTargetCreator \
         ${arg_bam} \
         --reference_sequence ${reference_fasta} \
-        --known ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
+        --known ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
         --known ${bundle_known_indels_vcf_gz} \
         --intervals ${interval} \
         --out ${output_rtc_intervals} \
@@ -74,8 +74,8 @@ process run_RealignerTargetCreator_GATK {
         reference_fasta: path to reference genome fasta file
         reference_fasta_fai: path to index for reference fasta
         reference_fasta_dict: path to dictionary for reference fasta
-        bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
-        bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
+        bundle_mills_and_1000g_gold_standard_indels_vcf_gz: path to standard Mills and 1000 genomes variants
+        bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi: path to index file for Mills and 1000g variants
         bundle_known_indels_vcf_gz: path to set of known indels
         bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
         (bam, bam_index, interval_id, interval, RTC_interval): 
@@ -103,8 +103,8 @@ process run_IndelRealigner_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    path(bundle_mills_and_1000g_gold_standards_vcf_gz)
-    path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
+    path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz)
+    path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
     tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), path(target_intervals_RTC)
@@ -134,7 +134,7 @@ process run_IndelRealigner_GATK {
         ${arg_bam} \
         --reference_sequence ${reference_fasta} \
         --bam_compression ${params.gatk_ir_compression} \
-        --knownAlleles ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
+        --knownAlleles ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
