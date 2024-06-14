@@ -182,14 +182,14 @@ workflow recalibrate_base {
 
     run_BaseRecalibrator_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-        "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+        params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi,
         params.bundle_known_indels_vcf_gz,
-        "${params.bundle_known_indels_vcf_gz}.tbi",
+        params.bundle_known_indels_vcf_gz_tbi,
         params.bundle_v0_dbsnp138_vcf_gz,
-        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        params.bundle_v0_dbsnp138_vcf_gz_tbi,
         base_recalibrator_intervals,
         params.input.recalibration_table,
         input_ch_base_recalibrator
@@ -220,8 +220,8 @@ workflow recalibrate_base {
 
     run_ApplyBQSR_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         input_ch_apply_bqsr
     )
 

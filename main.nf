@@ -120,13 +120,13 @@ workflow {
     /**
     *   Interval extraction and splitting
     */
-    extract_GenomeIntervals("${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict")
+    extract_GenomeIntervals(params.reference_fasta_dict)
 
     run_SplitIntervals_GATK(
         extract_GenomeIntervals.out.genomic_intervals,
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+        params.reference_fasta_fai,
+        params.reference_fasta_dict
     )
 
     run_SplitIntervals_GATK.out.interval_list
@@ -206,10 +206,10 @@ workflow {
 
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         params.bundle_contest_hapmap_3p3_vcf_gz,
-        "${params.bundle_contest_hapmap_3p3_vcf_gz}.tbi",
+        params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
         input_ch_summary_intervals,
         input_ch_merged_bams
     )
@@ -254,8 +254,8 @@ workflow {
 
     run_DepthOfCoverage_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         input_ch_summary_intervals,
         input_ch_merged_bams
     )

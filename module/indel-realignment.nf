@@ -161,24 +161,24 @@ workflow realign_indels {
 
     run_RealignerTargetCreator_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-        "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+        params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi,
         params.bundle_known_indels_vcf_gz,
-        "${params.bundle_known_indels_vcf_gz}.tbi",
+        params.bundle_known_indels_vcf_gz_tbi,
         "${params.getOrDefault('intervals', null) ?: params.work_dir + '/NO_FILE.bed'}",
         input_ch_rtc
         )
 
     run_IndelRealigner_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-        "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+        params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi,
         params.bundle_known_indels_vcf_gz,
-        "${params.bundle_known_indels_vcf_gz}.tbi",
+        params.bundle_known_indels_vcf_gz_tbi,
         run_RealignerTargetCreator_GATK.out.ir_targets
         )
 
