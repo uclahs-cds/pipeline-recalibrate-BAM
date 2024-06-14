@@ -150,11 +150,30 @@ For normal-only or tumour-only samples, exclude the fields for the other state.
 | `bundle_v0_dbsnp138_vcf_gz` | Yes | path | Absolute path to dbsnp file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/resources_broad_hg38_v0_Homo_sapiens_assembly38.dbsnp138.vcf.gz` |
 | `bundle_contest_hapmap_3p3_vcf_gz` | Yes | path | Absolute path to HapMap 3.3 biallelic sites file, e.g., `/hot/ref/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz` |
 | `work_dir` | optional | path | Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is `/scratch` and should only be changed for testing/development. Changing this directory to `/hot` or `/tmp` can lead to high server latency and potential disk space limitations, respectively. |
-| `docker_container_registry` | optional | string | Registry containing tool Docker images. Default: `ghcr.io/uclahs-cds` |
-| `metapipeline_delete_input_bams` | optional | boolean | Set to true to delete the input BAM files once the initial processing step is complete. **WARNING**: This option should NOT be used for individual runs of recalibate-BAM; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the `workDir`. |
-| `metapipeline_final_output_dir` | optional | string | Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. **WARNING**: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage. |
-| `metapipeline_states_to_delete` | optional | list | List of states for which to delete input BAMs. **WARNING**: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage. |
 | `base_resource_update` | optional | namespace | Namespace of parameters to update base resource allocations in the pipeline. Usage and structure are detailed in `template.config` and below. |
+
+
+The below parameters have default values defined in [`default.config`](./config/default.config) and generally do not need to be set by the user.
+
+| Optional Parameter | Type | Description |
+| :------------------| :----| :-----------|
+| `metapipeline_delete_input_bams` | boolean | Set to true to delete the input BAM files once the initial processing step is complete. **WARNING**: This option should NOT be used for individual runs of recalibate-BAM; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the `workDir`. |
+| `metapipeline_final_output_dir` | string | Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. **WARNING**: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage. |
+| `metapipeline_states_to_delete` | list | List of states for which to delete input BAMs. **WARNING**: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage. |
+| `cache_intermediate_pipeline_steps` | boolean | Enable process caching from Nextflow. |
+| `ucla_cds` | boolean | Overwrite default memory and CPU values by cluster-specific configs. |
+| `docker_container_registry` | string  | Registry containing tool Docker images. |
+| `docker_image_gatk`, `gatk_version` | string  | Docker image name and version for GATK. |
+| `docker_image_pipeval`, `pipeval_version` | string | Docker image name and version for PipeVal. |
+| `docker_image_gatk3`, `gatk3_version` | string | Docker image name and version for GATK3. |
+| `docker_image_picard`, `picard_version` | string | Docker image name and version for Picard. |
+| `docker_image_samtools`, `samtools_version` | string | Docker image name and version for SAMtools. |
+| `reference_fasta_fai`, `reference_fasta_dict` | path | Index and dictionary files for the required input. Default: Matching `.fai` and `.dict` files in the same directory. |
+| `bundle_v0_dbsnp138_vcf_gz_tbi` | path | Index file for the required input. Default: Matching `.tbi` file in the same directory. |
+| `bundle_known_indels_vcf_gz_tbi` | path | Index file for the required input. Default: Matching `.tbi` file in the same directory. |
+| `bundle_contest_hapmap_3p3_vcf_gz_tbi`| path | Index file for the required input. Default: Matching `.tbi` file in the same directory. |
+| `bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi` | path | Index file for the required input. Default: Matching `.tbi` file in the same directory. |
+
 
 #### Base resource allocation updaters
 To update the base resource (cpus or memory) allocations for processes, use the following structure and add the necessary parts. The default allocations can be found in the [node-specific config files](./config/)
