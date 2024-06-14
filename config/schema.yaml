@@ -56,26 +56,56 @@ reference_fasta:
   mode: 'r'
   required: true
   help: 'Absolute path to reference genome fasta'
+reference_fasta_fai:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to reference genome fasta index file'
+reference_fasta_dict:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to reference genome fasta dictionary'
 bundle_mills_and_1000g_gold_standard_indels_vcf_gz:
   type: 'Path'
   mode: 'r'
   required: true
   help: 'Absolute path to Mills and 1000g gold standard INDELs VCF'
+bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to Mills and 1000g gold standard INDELs VCF index file'
 bundle_known_indels_vcf_gz:
   type: 'Path'
   mode: 'r'
   required: true
   help: 'Absolute path to known INDELs VCF'
+bundle_known_indels_vcf_gz_tbi:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to known INDELs VCF index file'
 bundle_v0_dbsnp138_vcf_gz:
   type: 'Path'
   mode: 'r'
   required: true
   help: 'Absolute path to v0 dbSNP 138 VCF'
+bundle_v0_dbsnp138_vcf_gz_tbi:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to v0 dbSNP 138 VCF index file'
 bundle_contest_hapmap_3p3_vcf_gz:
   type: 'Path'
   mode: 'r'
   required: true
   help: 'Absolute path to ConEst HapMap 3p3 VCF'
+bundle_contest_hapmap_3p3_vcf_gz_tbi:
+  type: 'Path'
+  mode: 'r'
+  required: true
+  help: 'Absolute path to ConEst HapMap 3p3 VCF index file'
 metapipeline_delete_input_bams:
   type: 'Bool'
   required: true
