@@ -10,5 +10,5 @@ updates:
       # "pipeline-submodules" is an arbitrary name
       pipeline-submodules:
         patterns:
-          - pipeline-Nextflow-config
-          - pipeline-Nextflow-module
+          - "*/pipeline-Nextflow-config"
+          - "*/pipeline-Nextflow-module"
