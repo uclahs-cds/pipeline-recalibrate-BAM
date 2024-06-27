@@ -9,6 +9,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### [Changed]
+- Use `run_validate_PipeVal_with_metadata` to gate on validation
+- Move index/dictionary file discovery to configuration stage
+- Include all parameters from `default.config` in the README
+
 ---
 
 ## [1.0.1] - 2024-05-29
