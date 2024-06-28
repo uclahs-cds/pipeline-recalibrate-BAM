@@ -106,7 +106,7 @@
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
       <li class="breadcrumb-item active">Inputs</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM/blob/11d66229e54efcefe6b9620126e00829835d3065/README.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM/blob/e801e93e55fdf772bd39214af4cd979c328734fb/README.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -295,30 +295,6 @@ input:
 <td style="text-align: left;">Path of working directory for Nextflow. When included in the sample config file, Nextflow intermediate files and logs will be saved to this directory. With ucla_cds, the default is <code>/scratch</code> and should only be changed for testing/development. Changing this directory to <code>/hot</code> or <code>/tmp</code> can lead to high server latency and potential disk space limitations, respectively.</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>docker_container_registry</code></td>
-<td style="text-align: left;">optional</td>
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">Registry containing tool Docker images. Default: <code>ghcr.io/uclahs-cds</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>metapipeline_delete_input_bams</code></td>
-<td style="text-align: left;">optional</td>
-<td style="text-align: left;">boolean</td>
-<td style="text-align: left;">Set to true to delete the input BAM files once the initial processing step is complete. <strong>WARNING</strong>: This option should NOT be used for individual runs of recalibate-BAM; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the <code>workDir</code>.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>metapipeline_final_output_dir</code></td>
-<td style="text-align: left;">optional</td>
-<td style="text-align: left;">string</td>
-<td style="text-align: left;">Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. <strong>WARNING</strong>: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>metapipeline_states_to_delete</code></td>
-<td style="text-align: left;">optional</td>
-<td style="text-align: left;">list</td>
-<td style="text-align: left;">List of states for which to delete input BAMs. <strong>WARNING</strong>: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage.</td>
-</tr>
-<tr>
 <td style="text-align: left;"><code>base_resource_update</code></td>
 <td style="text-align: left;">optional</td>
 <td style="text-align: left;">namespace</td>
@@ -326,8 +302,100 @@ input:
 </tr>
 </tbody>
 </table>
+<p>The below parameters have default values defined in <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM/blob/e801e93e55fdf772bd39214af4cd979c328734fb/config/default.config"><code>default.config</code></a> and generally do not need to be set by the user.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Optional Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>metapipeline_delete_input_bams</code></td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Set to true to delete the input BAM files once the initial processing step is complete. <strong>WARNING</strong>: This option should NOT be used for individual runs of recalibate-BAM; it's intended for metapipeline-DNA to optimize disk space usage by removing files that are no longer needed from the <code>workDir</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>metapipeline_final_output_dir</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Absolute path for the final output directory of metapipeline-DNA that's expected to contain the output BAM from align-DNA. <strong>WARNING</strong>: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>metapipeline_states_to_delete</code></td>
+<td style="text-align: left;">list</td>
+<td style="text-align: left;">List of states for which to delete input BAMs. <strong>WARNING</strong>: This option should not be used for individual runs of recalibrate-BAM; it's intended for metapipeline-DNA to optimize disk space usage.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cache_intermediate_pipeline_steps</code></td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Enable process caching from Nextflow.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ucla_cds</code></td>
+<td style="text-align: left;">boolean</td>
+<td style="text-align: left;">Overwrite default memory and CPU values by cluster-specific configs.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>docker_container_registry</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Registry containing tool Docker images.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>docker_image_gatk</code>, <code>gatk_version</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Docker image name and version for GATK.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>docker_image_pipeval</code>, <code>pipeval_version</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Docker image name and version for PipeVal.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>docker_image_gatk3</code>, <code>gatk3_version</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Docker image name and version for GATK3.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>docker_image_picard</code>, <code>picard_version</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Docker image name and version for Picard.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>docker_image_samtools</code>, <code>samtools_version</code></td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Docker image name and version for SAMtools.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reference_fasta_fai</code>, <code>reference_fasta_dict</code></td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Index and dictionary files for the required input. Default: Matching <code>.fai</code> and <code>.dict</code> files in the same directory.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_v0_dbsnp138_vcf_gz_tbi</code></td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Index file for the required input. Default: Matching <code>.tbi</code> file in the same directory.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_known_indels_vcf_gz_tbi</code></td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Index file for the required input. Default: Matching <code>.tbi</code> file in the same directory.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_contest_hapmap_3p3_vcf_gz_tbi</code></td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Index file for the required input. Default: Matching <code>.tbi</code> file in the same directory.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi</code></td>
+<td style="text-align: left;">path</td>
+<td style="text-align: left;">Index file for the required input. Default: Matching <code>.tbi</code> file in the same directory.</td>
+</tr>
+</tbody>
+</table>
 <h4 id="base-resource-allocation-updaters">Base resource allocation updaters</h4>
-<p>To update the base resource (cpus or memory) allocations for processes, use the following structure and add the necessary parts. The default allocations can be found in the <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM/blob/11d66229e54efcefe6b9620126e00829835d3065/config">node-specific config files</a></p>
+<p>To update the base resource (cpus or memory) allocations for processes, use the following structure and add the necessary parts. The default allocations can be found in the <a href="https://github.com/uclahs-cds/pipeline-recalibrate-BAM/blob/e801e93e55fdf772bd39214af4cd979c328734fb/config">node-specific config files</a></p>
 <pre><code class="language-Nextflow">base_resource_update {
     memory = [
         [['process_name', 'process_name2'], &lt;multiplier for resource&gt;],
