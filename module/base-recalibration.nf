@@ -15,8 +15,8 @@ include {
         reference_fasta: path to reference genome fasta file
         reference_fasta_fai: path to index for reference fasta
         reference_fasta_dict: path to dictionary for reference fasta
-        bundle_mills_and_1000g_gold_standards_vcf_gz: path to standard Mills and 1000 genomes variants
-        bundle_mills_and_1000g_gold_standards_vcf_gz_tbi: path to index file for Mills and 1000g variants
+        bundle_mills_and_1000g_gold_standard_indels_vcf_gz: path to standard Mills and 1000 genomes variants
+        bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi: path to index file for Mills and 1000g variants
         bundle_known_indels_vcf_gz: path to set of known indels
         bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
         bundle_v0_dbsnp138_vcf_gz: path to dbSNP variants
@@ -46,8 +46,8 @@ process run_BaseRecalibrator_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    path(bundle_mills_and_1000g_gold_standards_vcf_gz)
-    path(bundle_mills_and_1000g_gold_standards_vcf_gz_tbi)
+    path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz)
+    path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
     path(bundle_v0_dbsnp138_vcf_gz)
@@ -71,7 +71,7 @@ process run_BaseRecalibrator_GATK {
             ${all_ir_bams} \
             --reference ${reference_fasta} \
             --verbosity INFO \
-            --known-sites ${bundle_mills_and_1000g_gold_standards_vcf_gz} \
+            --known-sites ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
             --known-sites ${bundle_known_indels_vcf_gz} \
             --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
             --output ${sample_id}_recalibration_table.grp \
@@ -182,14 +182,14 @@ workflow recalibrate_base {
 
     run_BaseRecalibrator_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz,
-        "${params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz}.tbi",
+        params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi,
         params.bundle_known_indels_vcf_gz,
-        "${params.bundle_known_indels_vcf_gz}.tbi",
+        params.bundle_known_indels_vcf_gz_tbi,
         params.bundle_v0_dbsnp138_vcf_gz,
-        "${params.bundle_v0_dbsnp138_vcf_gz}.tbi",
+        params.bundle_v0_dbsnp138_vcf_gz_tbi,
         base_recalibrator_intervals,
         params.input.recalibration_table,
         input_ch_base_recalibrator
@@ -220,8 +220,8 @@ workflow recalibrate_base {
 
     run_ApplyBQSR_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         input_ch_apply_bqsr
     )
 

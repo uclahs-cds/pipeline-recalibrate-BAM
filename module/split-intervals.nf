@@ -3,9 +3,9 @@
 
     input:
         intervals: path to set of target intervals to split
-        reference: path to reference genome fasta file
-        reference_index: path to index for reference fasta
-        reference_dict: path to dictionary for reference fasta
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_index: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
 
     params:
         params.output_dir_base: string(path)
@@ -23,9 +23,9 @@ process run_SplitIntervals_GATK {
 
     input:
     path intervals
-    path reference
-    path reference_index
-    path reference_dict
+    path reference_fasta
+    path reference_fasta_index
+    path reference_fasta_dict
 
     output:
     path "*-contig.interval_list", emit: interval_list
@@ -39,7 +39,7 @@ process run_SplitIntervals_GATK {
         for i in `grep -E '^(chr|)([0-9]+|X|Y|M)\$' ${intervals}`
         do
             gatk SplitIntervals \
-                -R ${reference} \
+                -R ${reference_fasta} \
                 -L ${intervals} \
                 -L \$i \
                 --interval-set-rule INTERSECTION \
@@ -51,7 +51,7 @@ process run_SplitIntervals_GATK {
         done
 
         gatk SplitIntervals \
-            -R ${reference} \
+            -R ${reference_fasta} \
             -L ${intervals} \
             \$assembled_chr_to_exclude \
             --interval-set-rule INTERSECTION \
@@ -61,7 +61,7 @@ process run_SplitIntervals_GATK {
         mv 0000-scattered.interval_list nonassembled-contig.interval_list
     else
         gatk SplitIntervals \
-            -R ${reference} \
+            -R ${reference_fasta} \
             -L ${intervals} \
             --scatter-count ${params.scatter_count} \
             ${params.split_intervals_extra_args} \

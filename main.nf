@@ -25,7 +25,7 @@ Current Configuration:
         intervals: ${(params.is_targeted) ?: 'WGS'}
         Recalibration tables: ${params.input.recalibration_table}
 
-    - output: 
+    - output:
         output: ${params.output_dir}
         output_dir_base: ${params.output_dir_base}
         log_output_dir: ${params.log_output_dir}
@@ -43,7 +43,7 @@ Starting workflow...
 ------------------------------------
         """
 
-include { run_validate_PipeVal } from './external/pipeline-Nextflow-module/modules/PipeVal/validate/main.nf' addParams(
+include { run_validate_PipeVal_with_metadata } from './external/pipeline-Nextflow-module/modules/PipeVal/validate/main.nf' addParams(
     options: [
         docker_image_version: params.pipeval_version,
         main_process: "./" //Save logs in <log_dir>/process-log/run_validate_PipeVal
@@ -82,51 +82,46 @@ workflow {
     /**
     *   Input channel processing
     */
-    Channel.from(params.samples_to_process)
-        .map{ sample -> ['index': indexFile(sample.path)] + sample }
-        .set{ input_ch_samples_with_index }
-
-    input_ch_samples_with_index
-        .map{ sample -> [sample.path, sample.index] }
-        .flatten()
-        .set{ input_ch_validate }
-
-    input_ch_samples_with_index
-        .map{ sample -> sample.id }
-        .flatten()
-        .set{ input_ch_sample_ids }
-
-    input_ch_samples_with_index
-        .reduce( ['bams': [], 'indices': []] ){ a, b ->
-            a.bams.add(b.path);
-            a.indices.add(b.index);
-            return a
-        }
-        .set{ input_ch_collected_files }
-
 
     /**
     *   Input validation
     */
-    run_validate_PipeVal(input_ch_validate)
+    Channel.from(params.samples_to_process)
+        .flatMap { sample ->
+            def all_metadata = sample.findAll { it.key != "path" }
+            return [
+                [sample.path, [all_metadata, "path"]],
+                [indexFile(sample.path), [[id: sample.id], "index"]]
+            ]
+        } | run_validate_PipeVal_with_metadata
 
-    run_validate_PipeVal.out.validation_result
+    run_validate_PipeVal_with_metadata.out.validation_result
         .collectFile(
             name: 'input_validation.txt',
             storeDir: "${params.output_dir_base}/validation"
         )
 
+    run_validate_PipeVal_with_metadata.out.validated_file
+        .map { filename, metadata -> [metadata[0].id, metadata[0] + [(metadata[1]): filename]] }
+        .groupTuple()
+        .map { it[1].inject([:]) { result, i -> result + i } }
+        .set { validated_samples_with_index }
+
+    // The elements of validated_samples_with_index are the same as
+    // params.samples_to_process, with the following changes:
+    // * sample.path is the validated BAM file
+    // * sample.index is the validated BAI file (new key)
 
     /**
     *   Interval extraction and splitting
     */
-    extract_GenomeIntervals("${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict")
+    extract_GenomeIntervals(params.reference_fasta_dict)
 
     run_SplitIntervals_GATK(
         extract_GenomeIntervals.out.genomic_intervals,
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict"
+        params.reference_fasta_fai,
+        params.reference_fasta_dict
     )
 
     run_SplitIntervals_GATK.out.interval_list
@@ -143,18 +138,22 @@ workflow {
     /**
     *   Indel realignment
     */
-    input_ch_collected_files
+    validated_samples_with_index
+        .reduce( ['bams': [], 'indices': []] ){ a, b ->
+            a.bams.add(b.path);
+            a.indices.add(b.index);
+            return a
+        }
         .combine(input_ch_intervals)
         .map{ it -> it[0] + it[1] }
         .set{ input_ch_indel_realignment }
 
     realign_indels(input_ch_indel_realignment)
 
-
     /**
     *   Input file deletion
     */
-    input_ch_samples_with_index
+    validated_samples_with_index
         .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
         .map{ sample -> sample.path }
         .flatten()
@@ -179,7 +178,7 @@ workflow {
     */
     recalibrate_base(
         realign_indels.out.output_ch_realign_indels,
-        input_ch_sample_ids
+        validated_samples_with_index.map{ sample -> sample.id }.flatten()
     )
 
 
@@ -206,21 +205,21 @@ workflow {
 
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         params.bundle_contest_hapmap_3p3_vcf_gz,
-        "${params.bundle_contest_hapmap_3p3_vcf_gz}.tbi",
+        params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
         input_ch_summary_intervals,
         input_ch_merged_bams
     )
 
-    input_ch_samples_with_index
+    validated_samples_with_index
         .filter{ it.sample_type == 'normal' }
         .map{ it -> [sanitize_string(it.id)] }
         .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
         .set{ normal_pileupsummaries }
 
-    input_ch_samples_with_index
+    validated_samples_with_index
         .filter{ it.sample_type == 'tumor' }
         .map{ it -> [sanitize_string(it.id)] }
         .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
@@ -254,8 +253,8 @@ workflow {
 
     run_DepthOfCoverage_GATK(
         params.reference_fasta,
-        "${params.reference_fasta}.fai",
-        "${file(params.reference_fasta).parent}/${file(params.reference_fasta).baseName}.dict",
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
         input_ch_summary_intervals,
         input_ch_merged_bams
     )
