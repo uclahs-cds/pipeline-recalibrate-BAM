@@ -9,6 +9,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- Add release management workflows from `tool-create-release`
+
 ### [Changed]
 - Use `run_validate_PipeVal_with_metadata` to gate on validation
 - Move index/dictionary file discovery to configuration stage
