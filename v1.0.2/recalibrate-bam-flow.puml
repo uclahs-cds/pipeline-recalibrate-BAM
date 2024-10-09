@@ -1,0 +1,114 @@
+@startuml
+
+skinparam SwimlaneTitleFontStyle bold
+
+
+|s| Parallelized by sample
+|i| Parallelized by interval
+
+
+|s|
+
+start
+
+partition "**Unparallelized Setup**\nThis block is run once\nregardless of sample count" {
+    if (Parallelize by\nchromosome?) is (Yes) then
+        :==run_SplitIntervals_GATK
+        ----
+        Split reference genome into
+        interval lists by chomosome
+        (1-22, X, Y, M, nonassembled);
+    else (No)
+        :==run_SplitIntervals_GATK
+        ----
+        Split reference genome into
+        **scatter_count** interval lists;
+    endif
+}
+
+:==run_validate_PipeVal
+----
+Validate the input BAM and index file;
+
+
+|i|
+
+:==run_RealignerTargetCreator_GATK
+----
+Split input BAMs by interval and identify
+potentially misaligned sub-intervals to
+target across all input samples;
+
+:==run_IndelRealigner_GATK
+----
+Realign indels across all input
+samples simultaneously;
+
+|s|
+
+:==run_BaseRecalibrator_GATK
+----
+Generate base quality score recalibration
+(BQSR) table based on read group, reported
+quality score, machine cycle, and nucleotide
+context;
+
+|i|
+
+:==run_ApplyBQSR_GATK
+----
+Apply the recalibration to each input
+sample sequentially;
+
+|s|
+
+:==run_MergeSamFiles_Picard
+----
+Merge interval BAMS into recalibrated BAM;
+
+if (Parallelize by\nchromosome?) is (No) then
+    :==deduplicate_records_SAMtools
+    ----
+    Remove duplicate reads due to 
+    overlap on interval splitting sites;
+else (Yes)
+endif
+
+:==run_index_SAMtools
+----
+Create index file for recalibrated BAM;
+
+:==calculate_sha512
+----
+Generate sha512 checksum for
+recalibrated BAM and index file;
+
+split
+    :==run_GetPileupSummaries_GATK
+    ----
+    Summarize counts of reads that support
+    reference, alternate, and other alleles
+    for given sites;
+
+    :==run_CalculateContamination_GATK
+    ----
+    Calculate the fraction of reads coming
+    from cross-sample contamination.
+
+    If the input is a paired sample, run
+    again in matched normal mode;
+split again
+    if (Compute depth\nof coverage?) is (Yes) then
+        :==run_DepthOfCoverage_GATK
+        ----
+        Assess sequence coverage by a wide array
+        of metrics, partioned by sample, read
+        group, and library;
+    endif
+end split
+
+stop
+
+
+@enduml
+
