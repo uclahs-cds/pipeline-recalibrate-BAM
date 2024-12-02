@@ -51,6 +51,72 @@
     },
     "params": {
       "aligner": "BWA-MEM2-2.2.1",
+      "base_allocations": {
+        "deduplicate_records_SAMtools": {
+          "cpus": "2",
+          "memory": "57.6 GB"
+        },
+        "extract_GenomeIntervals": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "remove_intermediate_files": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "remove_merged_BAM": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "remove_unmerged_BAMs": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "run_ApplyBQSR_GATK": {
+          "cpus": "1",
+          "memory": "2 GB"
+        },
+        "run_BaseRecalibrator_GATK": {
+          "cpus": "1",
+          "memory": "57.6 GB"
+        },
+        "run_CalculateContamination_GATK": {
+          "cpus": "1",
+          "memory": "28.8 GB"
+        },
+        "run_DepthOfCoverage_GATK": {
+          "cpus": "1",
+          "memory": "28.8 GB"
+        },
+        "run_GetPileupSummaries_GATK": {
+          "cpus": "1",
+          "memory": "28.8 GB"
+        },
+        "run_IndelRealigner_GATK": {
+          "cpus": "4",
+          "memory": "6 GB"
+        },
+        "run_MergeSamFiles_Picard": {
+          "cpus": "2",
+          "memory": "57.6 GB"
+        },
+        "run_RealignerTargetCreator_GATK": {
+          "cpus": "4",
+          "memory": "6 GB"
+        },
+        "run_SplitIntervals_GATK": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
+        "run_index_SAMtools": {
+          "cpus": "1",
+          "memory": "2 GB"
+        },
+        "run_validate_PipeVal": {
+          "cpus": "1",
+          "memory": "1 GB"
+        }
+      },
       "blcds_registered_dataset": false,
       "bundle_contest_hapmap_3p3_vcf_gz": "/hot/resource/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz",
       "bundle_contest_hapmap_3p3_vcf_gz_tbi": "/hot/resource/tool-specific-input/GATK/GRCh38/Biallelic/hapmap_3.3.hg38.BIALLELIC.PASS.2021-09-01.vcf.gz.tbi",
@@ -89,6 +155,7 @@
       "log_output_dir": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/log-recalibrate-BAM-VER.SI.ON-19970704T165655Z",
       "max_cpus": "32",
       "max_memory": "64 GB",
+      "max_time": "24d 20h 31m 24s",
       "metapipeline_delete_input_bams": false,
       "metapipeline_states_to_delete": [
         "normal",
@@ -96,141 +163,78 @@
       ],
       "min_cpus": "1",
       "min_memory": "1 MB",
+      "min_time": "1s",
       "output_dir": "/tmp/outputs",
       "output_dir_base": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/GATK-4.2.4.1",
       "parallelize_by_chromosome": true,
       "patient_id": "TWGSAMIN000001",
       "picard_version": "2.26.10",
       "pipeval_version": "4.0.0-rc.2",
-      "proc_resource_params": {
-        "deduplicate_records_SAMtools": {
-          "cpus": "2",
-          "memory": "57.6 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "extract_GenomeIntervals": {
-          "cpus": "1",
-          "memory": "1 GB"
-        },
-        "remove_intermediate_files": {
-          "cpus": "1",
-          "memory": "1 GB"
-        },
-        "remove_merged_BAM": {
-          "cpus": "1",
-          "memory": "1 GB"
-        },
-        "remove_unmerged_BAMs": {
-          "cpus": "1",
-          "memory": "1 GB"
-        },
-        "run_ApplyBQSR_GATK": {
-          "cpus": "1",
-          "memory": "2 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "4",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_BaseRecalibrator_GATK": {
-          "cpus": "1",
-          "memory": "57.6 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_CalculateContamination_GATK": {
-          "cpus": "1",
-          "memory": "28.8 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_DepthOfCoverage_GATK": {
-          "cpus": "1",
-          "memory": "28.8 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_GetPileupSummaries_GATK": {
-          "cpus": "1",
-          "memory": "28.8 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_IndelRealigner_GATK": {
-          "cpus": "4",
-          "memory": "6 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "4",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_MergeSamFiles_Picard": {
-          "cpus": "2",
-          "memory": "57.6 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_RealignerTargetCreator_GATK": {
-          "cpus": "4",
-          "memory": "6 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_SplitIntervals_GATK": {
-          "cpus": "1",
-          "memory": "1 GB"
-        },
-        "run_index_SAMtools": {
-          "cpus": "1",
-          "memory": "2 GB",
-          "retry_strategy": {
-            "memory": {
-              "operand": "2",
-              "strategy": "exponential"
-            }
-          }
-        },
-        "run_validate_PipeVal": {
-          "cpus": "1",
-          "memory": "1 GB"
-        }
-      },
       "reference_fasta": "/hot/resource/reference-genome/GRCh38-BI-20160721/Homo_sapiens_assembly38.fasta",
       "reference_fasta_dict": "/hot/resource/reference-genome/GRCh38-BI-20160721/Homo_sapiens_assembly38.dict",
       "reference_fasta_fai": "/hot/resource/reference-genome/GRCh38-BI-20160721/Homo_sapiens_assembly38.fasta.fai",
+      "retry_information": {
+        "deduplicate_records_SAMtools": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
+        "run_ApplyBQSR_GATK": {
+          "memory": {
+            "operand": "4",
+            "strategy": "exponential"
+          }
+        },
+        "run_BaseRecalibrator_GATK": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
+        "run_CalculateContamination_GATK": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
+        "run_DepthOfCoverage_GATK": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
+        "run_GetPileupSummaries_GATK": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
+        "run_IndelRealigner_GATK": {
+          "memory": {
+            "operand": "4",
+            "strategy": "exponential"
+          }
+        },
+        "run_MergeSamFiles_Picard": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
+        "run_RealignerTargetCreator_GATK": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
+        "run_index_SAMtools": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        }
+      },
       "samples_to_process": [
         {
           "id": "4915723",
@@ -450,6 +454,12 @@
     "report": {
       "enabled": true,
       "file": "/tmp/outputs/recalibrate-BAM-VER.SI.ON/TWGSAMIN000001/log-recalibrate-BAM-VER.SI.ON-19970704T165655Z/nextflow-log/report.html"
+    },
+    "resource_handler": {
+      "handle_resources": "closure()",
+      "set_resource_limit_params": "closure()",
+      "set_retry": "closure()",
+      "setup_retry": "closure()"
     },
     "timeline": {
       "enabled": true,
