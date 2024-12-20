@@ -1056,13 +1056,13 @@
         },
         "run_RealignerTargetCreator_GATK": {
             "cpus": {
-                "min": 6,
-                "fraction": 0.08,
+                "min": 2,
+                "fraction": 0.10,
                 "max": 6
             },
             "memory": {
-                "min": "10 GB",
-                "fraction": 0.07,
+                "min": "4 GB",
+                "fraction": 0.10,
                 "max": "10 GB"
             },
             "retry_strategy": {
@@ -1074,13 +1074,13 @@
         },
         "run_IndelRealigner_GATK": {
             "cpus": {
-                "min": 6,
-                "fraction": 0.08,
+                "min": 2,
+                "fraction": 0.10,
                 "max": 6
             },
             "memory": {
-                "min": "10 GB",
-                "fraction": 0.07,
+                "min": "4 GB",
+                "fraction": 0.10,
                 "max": "10 GB"
             },
             "retry_strategy": {
@@ -1097,7 +1097,7 @@
                 "max": 1
             },
             "memory": {
-                "min": "72 GB",
+                "min": "1 GB",
                 "fraction": 0.53,
                 "max": "72 GB"
             },
@@ -1133,8 +1133,8 @@
                 "max": 2
             },
             "memory": {
-                "min": "8 GB",
-                "fraction": 0.06,
+                "min": "4 GB",
+                "fraction": 0.10,
                 "max": "8 GB"
             },
             "retry_strategy": {
@@ -1151,8 +1151,8 @@
                 "max": 2
             },
             "memory": {
-                "min": "8 GB",
-                "fraction": 0.06,
+                "min": "4 GB",
+                "fraction": 0.10,
                 "max": "8 GB"
             },
             "retry_strategy": {
@@ -1187,9 +1187,9 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
-                "fraction": 0.04,
-                "max": "5 GB"
+                "min": "3 GB",
+                "fraction": 0.05,
+                "max": "10 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -1205,9 +1205,9 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
-                "fraction": 0.04,
-                "max": "5 GB"
+                "min": "3 GB",
+                "fraction": 0.05,
+                "max": "10 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -1223,8 +1223,8 @@
                 "max": 1
             },
             "memory": {
-                "min": "10 GB",
-                "fraction": 0.07,
+                "min": "4 GB",
+                "fraction": 0.10,
                 "max": "10 GB"
             },
             "retry_strategy": {
