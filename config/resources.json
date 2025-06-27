@@ -37,6 +37,260 @@
             }
         }
     },
+    "f8": {
+        "run_validate_PipeVal": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.06,
+                "max": "1 GB"
+            }
+        },
+        "extract_GenomeIntervals": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.06,
+                "max": "1 GB"
+            }
+        },
+        "run_SplitIntervals_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.06,
+                "max": "1 GB"
+            }
+        },
+        "run_RealignerTargetCreator_GATK": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.25,
+                "max": 2
+            },
+            "memory": {
+                "min": "4 GB",
+                "fraction": 0.26,
+                "max": "4 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_IndelRealigner_GATK": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.25,
+                "max": 2
+            },
+            "memory": {
+                "min": "4 GB",
+                "fraction": 0.25,
+                "max": "4 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 4
+                }
+            }
+        },
+        "run_BaseRecalibrator_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "30 GB",
+                "fraction": 0.99,
+                "max": "30 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_ApplyBQSR_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "2 GB",
+                "fraction": 0.14,
+                "max": "2 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 4
+                }
+            }
+        },
+        "run_MergeSamFiles_Picard": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.25,
+                "max": 2
+            },
+            "memory": {
+                "min": "8 GB",
+                "fraction": 0.52,
+                "max": "8 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "deduplicate_records_SAMtools": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.25,
+                "max": 2
+            },
+            "memory": {
+                "min": "8 GB",
+                "fraction": 0.52,
+                "max": "8 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_index_SAMtools": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "2 GB",
+                "fraction": 0.14,
+                "max": "2 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_GetPileupSummaries_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "5 GB",
+                "fraction": 0.32,
+                "max": "5 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_CalculateContamination_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "5 GB",
+                "fraction": 0.32,
+                "max": "5 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_DepthOfCoverage_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "5 GB",
+                "fraction": 0.32,
+                "max": "5 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "remove_intermediate_files": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.06,
+                "max": "1 GB"
+            }
+        },
+        "remove_unmerged_BAMs": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.06,
+                "max": "1 GB"
+            }
+        },
+        "remove_merged_BAM": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.06,
+                "max": "1 GB"
+            }
+        }
+    },
     "f16": {
         "run_validate_PipeVal": {
             "cpus": {
