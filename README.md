@@ -14,6 +14,11 @@
 
 This pipeline takes BAMs and corresponding indices from [pipeline-align-DNA](https://github.com/uclahs-cds/pipeline-align-DNA) and performs indel realignment and BQSR. It can be run with any combination of normal and tumor samples (normal only, tumor only, normal-tumor paired, multiple normal and tumor samples).
 
+The pipeline now supports flexible processing modes:
+- **Both processes** (default): Run both indel realignment and base recalibration
+- **Indel realignment only**: Skip base recalibration step
+- **Base recalibration only**: Skip indel realignment and run BQSR directly on raw BAMs
+
 ---
 
 ## How To Run
@@ -90,6 +95,8 @@ Generate sha512 checksum for final BAM and BAI files.
 | Field | Type | Description |
 |:------|:-----|:------------|
 | patient_id | string | Patient ID (will be standardized according to data storage structure in the near future) |
+| run_indel_realignment | boolean | (Optional) Whether to run indel realignment. Default: true |
+| run_base_recalibration | boolean | (Optional) Whether to run base recalibration. Default: true |
 | normal_BAM | path | Set to absolute path to normal BAM |
 | tumor_BAM | path | Set to absolute path to tumour BAM |
 | recalibration_table | path | (Optional) Absolute path to recalibration table |
@@ -128,12 +135,58 @@ input:
 
 For normal-only or tumour-only samples, exclude the fields for the other state.
 
+#### Processing Mode Examples
+
+Run indel realignment only:
+```
+---
+patient_id: "patient_id"
+run_indel_realignment: true
+run_base_recalibration: false
+input:
+  BAM:
+    normal:
+      - "/absolute/path/to/BAM"
+    tumor:
+      - "/absolute/path/to/BAM"
+```
+
+Run base recalibration only:
+```
+---
+patient_id: "patient_id"
+run_indel_realignment: false
+run_base_recalibration: true
+input:
+  BAM:
+    normal:
+      - "/absolute/path/to/BAM"
+    tumor:
+      - "/absolute/path/to/BAM"
+```
+
+Run both processes (default behavior - parameters can be omitted):
+```
+---
+patient_id: "patient_id"
+run_indel_realignment: true
+run_base_recalibration: true
+input:
+  BAM:
+    normal:
+      - "/absolute/path/to/BAM"
+    tumor:
+      - "/absolute/path/to/BAM"
+```
+
 ### Config
 
 | Input Parameter | Required | Type | Description |
 |:----------------|:---------|:-----|:------------|
 | `dataset_id` | Yes | string | Dataset ID |
 | `blcds_registered_dataset` | Yes | boolean | Set to true when using BLCDS folder structure; use false for now |
+| `run_indel_realignment` | Yes | boolean | Whether to run indel realignment; defaults to true |
+| `run_base_recalibration` | Yes | boolean | Whether to run base recalibration; defaults to true |
 | `output_dir` | Yes | string | Need to set if `blcds_registered_dataset = false` |
 | `save_intermediate_files` | Yes | boolean | Set to false to disable publishing of intermediate files; true otherwise; disabling option will delete intermediate files to allow for processing of large BAMs |
 | `aligner` | Yes | string | Original aligner used to align input BAMs; formatted as \<aligner\>-\<aligner-version\> |

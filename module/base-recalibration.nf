@@ -22,8 +22,8 @@ include {
         bundle_v0_dbsnp138_vcf_gz: path to dbSNP variants
         bundle_v0_dbsnp138_vcf_gz_tbi: path to index of dbSNP variants
         all_intervals: list or tuple of paths to all split intervals
-        indelrealigned_bams: list or tuple of paths to indel realigned BAMs
-        indelrealigned_bams_bai: list or tuple of paths to indel realigned BAM indices
+        input_bams: list or tuple of paths to input BAMs (raw or indel realigned)
+        input_bams_bai: list or tuple of paths to input BAM indices
         sample_id: identifier for the sample
         
     params:
@@ -54,13 +54,13 @@ process run_BaseRecalibrator_GATK {
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
     path(intervals)
     path(recal_tables)
-    tuple path(indelrealigned_bams), path(indelrealigned_bams_bai), val(sample_id)
+    tuple path(input_bams), path(input_bams_bai), val(sample_id)
 
     output:
     tuple val(sample_id), path("${sample_id}_recalibration_table.grp"), emit: recalibration_table
 
     script:
-    all_ir_bams = indelrealigned_bams.collect{ "--input '${it}'" }.join(' ')
+    all_input_bams = input_bams.collect{ "--input '${it}'" }.join(' ')
     targeted_options = params.is_targeted ? "--intervals \"\$(realpath ${intervals})\" --interval-padding 100" : ""
     """
     set -euo pipefail
@@ -68,7 +68,7 @@ process run_BaseRecalibrator_GATK {
     then
         gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
             BaseRecalibrator \
-            ${all_ir_bams} \
+            ${all_input_bams} \
             --reference ${reference_fasta} \
             --verbosity INFO \
             --known-sites ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
@@ -89,8 +89,8 @@ process run_BaseRecalibrator_GATK {
         reference_fasta: path to reference genome fasta file
         reference_fasta_fai: path to index for reference fasta
         reference_fasta_dict: path to dictionary for reference fasta
-        indelrealigned_bam: list or tuple of paths to indel realigned BAMs
-        indelrealigned_bam_index: list or tuple of paths to indel realigned BAM indices
+        input_bam: list or tuple of paths to input BAMs (raw or indel realigned)
+        input_bam_index: list or tuple of paths to input BAM indices
         interval: path to specific intervals file associated with input BAM
         includes_unmapped: boolean to indicate if unmapped reads are included in input BAM
         sample_id: Identifier for sample being processed
@@ -117,8 +117,8 @@ process run_ApplyBQSR_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    tuple path(indelrealigned_bam),
-          path(indelrealigned_bam_index),
+    tuple path(input_bam),
+          path(input_bam_index),
           val(interval_id),
           path(interval),
           val(includes_unmapped),
@@ -127,7 +127,7 @@ process run_ApplyBQSR_GATK {
 
     output:
     path("*_recalibrated-*"), emit: output_ch_apply_bqsr
-    tuple path(indelrealigned_bam), path(indelrealigned_bam_index), emit: output_ch_deletion
+    tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
@@ -136,7 +136,7 @@ process run_ApplyBQSR_GATK {
         """
         gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \\
             ApplyBQSR \\
-            --input ${indelrealigned_bam} \\
+            --input ${input_bam} \\
             --bqsr-recal-file ${it}_recalibration_table.grp \\
             --reference ${reference_fasta} \\
             --read-filter SampleReadFilter \\
@@ -158,14 +158,17 @@ process run_ApplyBQSR_GATK {
 
 workflow recalibrate_base {
     take:
-    ir_samples
+    input_samples
     sample_ids
 
     main:
-    ir_samples
+    input_samples
         .reduce( ['bams': [], 'indices': []] ){ a, b ->
-            a.bams.add(b.bam);
-            a.indices.add(b.bam_index);
+            // Only add unique BAM files to avoid collisions (for base recalibration only mode)
+            if (!a.bams.contains(b.bam)) {
+                a.bams.add(b.bam);
+                a.indices.add(b.bam_index);
+            }
             return a
         }
         .combine(sample_ids)
@@ -203,7 +206,7 @@ workflow recalibrate_base {
         }
         .set{ all_recal_tables }
 
-    ir_samples
+    input_samples
         .combine(all_recal_tables)
         .map{ it ->
             [
@@ -235,8 +238,19 @@ workflow recalibrate_base {
         }
         .set{ output_ch_base_recalibration }
 
+    // Only remove intermediate files if they're not original input files
+    // Check if the files are from indel realignment (contain "indelrealigned") or original inputs
+    run_ApplyBQSR_GATK.out.output_ch_deletion
+        .flatten()
+        .filter{ file -> 
+            // Only delete if filename contains "indelrealigned" (intermediate files)
+            // Skip deletion of original input BAMs in base recalibration only mode
+            file.name.contains("indelrealigned")
+        }
+        .set{ files_to_delete }
+    
     remove_intermediate_files(
-        run_ApplyBQSR_GATK.out.output_ch_deletion.flatten(),
+        files_to_delete,
         "bqsr_complete"
     )
 

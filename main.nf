@@ -15,6 +15,10 @@ Current Configuration:
         name: ${workflow.manifest.name}
         version: ${workflow.manifest.version}
 
+    - processing:
+        run_indel_realignment: ${params.run_indel_realignment}
+        run_base_recalibration: ${params.run_base_recalibration}
+
     - input:
         samples: ${params.samples_to_process}
         aligner: ${params.aligner}
@@ -80,6 +84,13 @@ def indexFile(bam_or_vcf) {
 
 workflow {
     /**
+    *   Parameter validation
+    */
+    if (!params.run_indel_realignment && !params.run_base_recalibration) {
+        error "Error: At least one of run_indel_realignment or run_base_recalibration must be true"
+    }
+
+    /**
     *   Input channel processing
     */
 
@@ -136,8 +147,10 @@ workflow {
 
 
     /**
-    *   Indel realignment
+    *   Conditional workflow processing
     */
+    
+    // Prepare input for processing
     validated_samples_with_index
         .reduce( ['bams': [], 'indices': []] ){ a, b ->
             a.bams.add(b.path);
@@ -146,46 +159,123 @@ workflow {
         }
         .combine(input_ch_intervals)
         .map{ it -> it[0] + it[1] }
-        .set{ input_ch_indel_realignment }
+        .set{ input_ch_processing }
 
-    realign_indels(input_ch_indel_realignment)
+    // Execute processing based on parameters
+    if (params.run_indel_realignment && params.run_base_recalibration) {
+        // Both processes (original behavior)
+        realign_indels(input_ch_processing)
+        
+        // Input file deletion after indel realignment
+        validated_samples_with_index
+            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
+            .map{ sample -> sample.path }
+            .flatten()
+            .unique()
+            .set{ input_bams }
 
-    /**
-    *   Input file deletion
-    */
-    validated_samples_with_index
-        .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
-        .map{ sample -> sample.path }
-        .flatten()
-        .unique()
-        .set{ input_bams }
+        realign_indels.out.output_ch_realign_indels
+            .map{ it.has_unmapped }
+            .collect()
+            .set{ ir_complete_signal }
 
-    realign_indels.out.output_ch_realign_indels
-        .map{ it.has_unmapped }
-        .collect()
-        .set{ ir_complete_signal }
+        input_bams
+            .combine(ir_complete_signal)
+            .map{ it[0] }
+            .set{ input_ch_bams_to_delete }
 
-    input_bams
-        .combine(ir_complete_signal)
-        .map{ it[0] }
-        .set{ input_ch_bams_to_delete }
+        delete_input(input_ch_bams_to_delete)
+        
+        recalibrate_base(
+            realign_indels.out.output_ch_realign_indels,
+            validated_samples_with_index.map{ sample -> sample.id }.flatten()
+        )
+        
+        samples_for_merge = recalibrate_base.out.recalibrated_samples
+        
+    } else if (params.run_indel_realignment && !params.run_base_recalibration) {
+        // Indel realignment only
+        realign_indels(input_ch_processing)
+        
+        // Input file deletion after indel realignment
+        validated_samples_with_index
+            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
+            .map{ sample -> sample.path }
+            .flatten()
+            .unique()
+            .set{ input_bams }
 
-    delete_input(input_ch_bams_to_delete)
+        realign_indels.out.output_ch_realign_indels
+            .map{ it.has_unmapped }
+            .collect()
+            .set{ ir_complete_signal }
 
+        input_bams
+            .combine(ir_complete_signal)
+            .map{ it[0] }
+            .set{ input_ch_bams_to_delete }
 
-    /**
-    *   Base recalibration
-    */
-    recalibrate_base(
-        realign_indels.out.output_ch_realign_indels,
-        validated_samples_with_index.map{ sample -> sample.id }.flatten()
-    )
+        delete_input(input_ch_bams_to_delete)
+        
+        // Transform indel realignment output to merge format
+        realign_indels.out.output_ch_realign_indels
+            .map{
+                [
+                    'sample': it.bam.baseName.split("_")[3], // extract sample ID
+                    'bam': it.bam
+                ]
+            }
+            .set{ samples_for_merge }
+            
+    } else if (!params.run_indel_realignment && params.run_base_recalibration) {
+        // Base recalibration only on raw BAMs
+        // Create interval-based entries to enable ApplyBQSR parallelization
+        // BaseRecalibrator will deduplicate identical BAMs automatically
+        validated_samples_with_index
+            .combine(input_ch_intervals)
+            .map{ sample, interval ->
+                [
+                    'bam': sample.path,
+                    'bam_index': sample.index,
+                    'interval_id': interval.interval_id,
+                    'interval': interval.interval_path,
+                    'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000')
+                ]
+            }
+            .set{ raw_bam_input }
+        
+        recalibrate_base(
+            raw_bam_input,
+            validated_samples_with_index.map{ sample -> sample.id }.flatten()
+        )
+        
+        // Input file deletion (consistent with other modes)
+        validated_samples_with_index
+            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
+            .map{ sample -> sample.path }
+            .flatten()
+            .unique()
+            .set{ input_bams }
 
+        recalibrate_base.out.recalibrated_samples
+            .map{ it.sample } // Use any signal from base recalibration completion
+            .collect()
+            .set{ bqsr_complete_signal }
+
+        input_bams
+            .combine(bqsr_complete_signal)
+            .map{ it[0] }
+            .set{ input_ch_bams_to_delete }
+
+        delete_input(input_ch_bams_to_delete)
+        
+        samples_for_merge = recalibrate_base.out.recalibrated_samples
+    }
 
     /**
     *   Merge BAMs
     */
-    merge_bams(recalibrate_base.out.recalibrated_samples)
+    merge_bams(samples_for_merge)
 
 
     /**

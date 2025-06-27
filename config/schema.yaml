@@ -11,6 +11,16 @@ aligner:
   type: 'AlignerTool'
   required: true
   help: 'Aligner used to align input BAMs. Provided as <Aligner>-<Aligner-version>'
+run_indel_realignment:
+  type: 'Bool'
+  required: true
+  default: true
+  help: 'Whether to run indel realignment'
+run_base_recalibration:
+  type: 'Bool'
+  required: true
+  default: true
+  help: 'Whether to run base recalibration'
 output_dir:
   type: 'Path'
   mode: 'w'
