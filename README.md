@@ -135,49 +135,6 @@ input:
 
 For normal-only or tumour-only samples, exclude the fields for the other state.
 
-#### Processing Mode Examples
-
-Run indel realignment only:
-```
----
-patient_id: "patient_id"
-run_indel_realignment: true
-run_base_recalibration: false
-input:
-  BAM:
-    normal:
-      - "/absolute/path/to/BAM"
-    tumor:
-      - "/absolute/path/to/BAM"
-```
-
-Run base recalibration only:
-```
----
-patient_id: "patient_id"
-run_indel_realignment: false
-run_base_recalibration: true
-input:
-  BAM:
-    normal:
-      - "/absolute/path/to/BAM"
-    tumor:
-      - "/absolute/path/to/BAM"
-```
-
-Run both processes (default behavior - parameters can be omitted):
-```
----
-patient_id: "patient_id"
-run_indel_realignment: true
-run_base_recalibration: true
-input:
-  BAM:
-    normal:
-      - "/absolute/path/to/BAM"
-    tumor:
-      - "/absolute/path/to/BAM"
-```
 
 ### Config
 
