@@ -215,7 +215,7 @@ workflow recalibrate_base {
                 it[0].interval_id,
                 it[0].interval,
                 it[0].has_unmapped,
-                it[1].ids,
+                it[0].sample_id ? [it[0].sample_id] : it[1].ids,  // Use specific sample ID if available, otherwise all IDs
                 it[1].tables
             ]
         }

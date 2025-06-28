@@ -239,7 +239,8 @@ workflow {
                     'bam_index': sample.index,
                     'interval_id': interval.interval_id,
                     'interval': interval.interval_path,
-                    'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000')
+                    'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000'),
+                    'sample_id': sample.id  // Preserve sample ID with each BAM
                 ]
             }
             .set{ raw_bam_input }
