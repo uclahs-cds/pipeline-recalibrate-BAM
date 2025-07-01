@@ -204,11 +204,11 @@ workflow recalibrate_base {
             def sample_id
 
             if (sample_data.containsKey('sample_id')) {
-                // Base recalibration only mode - sample ID is provided
+                // Both base recalibration only mode and indel realignment mode now provide sample_id
                 sample_id = sample_data.sample_id
             } else {
-                // Indel realignment mode - extract from standardized BAM filename
-                sample_id = sample_data.bam.baseName.split("_")[3]
+                // Fallback - this should not happen with the new implementation
+                throw new Exception("Sample ID not found in input data: ${sample_data}")
             }
 
             return [
