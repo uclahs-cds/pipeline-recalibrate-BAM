@@ -150,15 +150,18 @@ workflow {
     *   Conditional workflow processing
     */
 
-    // Prepare input for processing
+    // Prepare input for processing with individual sample information preserved
     validated_samples_with_index
-        .reduce( ['bams': [], 'indices': []] ){ a, b ->
-            a.bams.add(b.path);
-            a.indices.add(b.index);
-            return a
-        }
         .combine(input_ch_intervals)
-        .map{ it -> it[0] + it[1] }
+        .map{ sample, interval ->
+            [
+                'bams': [sample.path],          // Keep as list for compatibility but preserve individual samples
+                'indices': [sample.index],      // Keep as list for compatibility but preserve individual samples
+                'interval_id': interval.interval_id,
+                'interval_path': interval.interval_path,
+                'sample_id': sample.id          // Preserve individual sample ID
+            ]
+        }
         .set{ input_ch_processing }
 
     /**
@@ -217,11 +220,11 @@ workflow {
             .map{ it.sample }
             .collect()
     } else {
-        // Transform processed samples to merge format (indel realignment only)
-        processed_samples
+        // Transform indel realignment output to merge format
+        realign_indels.out.output_ch_realign_indels
             .map{
                 [
-                    'sample': it.bam.baseName.split("_")[3], // extract sample ID
+                    'sample': it.sample_id,     // Use preserved sample_id instead of extracting
                     'bam': it.bam
                 ]
             }
