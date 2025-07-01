@@ -149,7 +149,7 @@ workflow {
     /**
     *   Conditional workflow processing
     */
-    
+
     // Prepare input for processing
     validated_samples_with_index
         .reduce( ['bams': [], 'indices': []] ){ a, b ->
@@ -161,76 +161,28 @@ workflow {
         .map{ it -> it[0] + it[1] }
         .set{ input_ch_processing }
 
-    // Execute processing based on parameters
-    if (params.run_indel_realignment && params.run_base_recalibration) {
-        // Both processes (original behavior)
-        realign_indels(input_ch_processing)
-        
-        // Input file deletion after indel realignment
-        validated_samples_with_index
-            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
-            .map{ sample -> sample.path }
-            .flatten()
-            .unique()
-            .set{ input_bams }
+    /**
+    *   Conditional workflow execution using channel manipulation
+    */
 
-        realign_indels.out.output_ch_realign_indels
+    // Prepare channels for input deletion (common across all modes)
+    validated_samples_with_index
+        .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
+        .map{ sample -> sample.path }
+        .flatten()
+        .unique()
+        .set{ input_bams_for_deletion }
+
+    // Step 1: Conditionally run indel realignment
+    if (params.run_indel_realignment) {
+        realign_indels(input_ch_processing)
+
+        processed_samples = realign_indels.out.output_ch_realign_indels
+        completion_signal = realign_indels.out.output_ch_realign_indels
             .map{ it.has_unmapped }
             .collect()
-            .set{ ir_complete_signal }
-
-        input_bams
-            .combine(ir_complete_signal)
-            .map{ it[0] }
-            .set{ input_ch_bams_to_delete }
-
-        delete_input(input_ch_bams_to_delete)
-        
-        recalibrate_base(
-            realign_indels.out.output_ch_realign_indels,
-            validated_samples_with_index.map{ sample -> sample.id }.flatten()
-        )
-        
-        samples_for_merge = recalibrate_base.out.recalibrated_samples
-        
-    } else if (params.run_indel_realignment && !params.run_base_recalibration) {
-        // Indel realignment only
-        realign_indels(input_ch_processing)
-        
-        // Input file deletion after indel realignment
-        validated_samples_with_index
-            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
-            .map{ sample -> sample.path }
-            .flatten()
-            .unique()
-            .set{ input_bams }
-
-        realign_indels.out.output_ch_realign_indels
-            .map{ it.has_unmapped }
-            .collect()
-            .set{ ir_complete_signal }
-
-        input_bams
-            .combine(ir_complete_signal)
-            .map{ it[0] }
-            .set{ input_ch_bams_to_delete }
-
-        delete_input(input_ch_bams_to_delete)
-        
-        // Transform indel realignment output to merge format
-        realign_indels.out.output_ch_realign_indels
-            .map{
-                [
-                    'sample': it.bam.baseName.split("_")[3], // extract sample ID
-                    'bam': it.bam
-                ]
-            }
-            .set{ samples_for_merge }
-            
-    } else if (!params.run_indel_realignment && params.run_base_recalibration) {
-        // Base recalibration only on raw BAMs
-        // Create interval-based entries to enable ApplyBQSR parallelization
-        // BaseRecalibrator will deduplicate identical BAMs automatically
+    } else {
+        // For base recalibration only mode, prepare raw BAM input with sample IDs
         validated_samples_with_index
             .combine(input_ch_intervals)
             .map{ sample, interval ->
@@ -240,38 +192,51 @@ workflow {
                     'interval_id': interval.interval_id,
                     'interval': interval.interval_path,
                     'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000'),
-                    'sample_id': sample.id  // Preserve sample ID with each BAM
+                    'sample_id': sample.id  // Include the actual sample ID
                 ]
             }
-            .set{ raw_bam_input }
-        
-        recalibrate_base(
-            raw_bam_input,
-            validated_samples_with_index.map{ sample -> sample.id }.flatten()
-        )
-        
-        // Input file deletion (consistent with other modes)
-        validated_samples_with_index
-            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
-            .map{ sample -> sample.path }
-            .flatten()
-            .unique()
-            .set{ input_bams }
+            .set{ processed_samples }
 
-        recalibrate_base.out.recalibrated_samples
-            .map{ it.sample } // Use any signal from base recalibration completion
-            .collect()
-            .set{ bqsr_complete_signal }
-
-        input_bams
-            .combine(bqsr_complete_signal)
-            .map{ it[0] }
-            .set{ input_ch_bams_to_delete }
-
-        delete_input(input_ch_bams_to_delete)
-        
-        samples_for_merge = recalibrate_base.out.recalibrated_samples
+        // No completion signal needed for raw BAMs
+        Channel.empty().set{ completion_signal }
     }
+
+    // Step 2: Conditionally run base recalibration
+    if (params.run_base_recalibration) {
+        // Prepare sample ID mapping for base recalibration only mode
+        if (params.run_indel_realignment) {
+            // For indel realignment + base recalibration, no mapping needed
+            recalibrate_base(processed_samples)
+        } else {
+            // For base recalibration only mode, sample IDs are already included
+            recalibrate_base(processed_samples)
+        }
+
+        samples_for_merge = recalibrate_base.out.recalibrated_samples
+        processing_completion_signal = recalibrate_base.out.recalibrated_samples
+            .map{ it.sample }
+            .collect()
+    } else {
+        // Transform processed samples to merge format (indel realignment only)
+        processed_samples
+            .map{
+                [
+                    'sample': it.bam.baseName.split("_")[3], // extract sample ID
+                    'bam': it.bam
+                ]
+            }
+            .set{ samples_for_merge }
+
+        processing_completion_signal = completion_signal
+    }
+
+    // Step 3: Input deletion after processing completion
+    input_bams_for_deletion
+        .combine(processing_completion_signal)
+        .map{ it[0] }
+        .set{ input_ch_bams_to_delete }
+
+    delete_input(input_ch_bams_to_delete)
 
     /**
     *   Merge BAMs
@@ -281,7 +246,6 @@ workflow {
 
     /**
     *   Summary and QC processes
-    */
     merge_bams.out.output_ch_merge_bams
         .map{ [it.sample, it.bam, it.bam_index] }
         .set{ input_ch_merged_bams }
@@ -349,4 +313,6 @@ workflow {
         input_ch_summary_intervals,
         input_ch_merged_bams
     )
+    */
 }
+

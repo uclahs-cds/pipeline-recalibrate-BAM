@@ -24,3 +24,12 @@ cases:
       - actual: recalibrate-BAM-*/TWGSAMIN000001/GATK-*/output/BWA-MEM2-*_GATK-*_A-mini_S2-v1.1.5.bam.bai.sha512
         expect: /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/output/BWA-MEM2-2.2.1_GATK-4.2.4.1_A-mini_S2-v1.1.5.bam.bai.sha512
         method: md5
+      - actual: recalibrate-BAM-*/TWGSAMIN000001/GATK-*/QC/S2_v1.1.5_recalibration_table.grp
+        expect: /hot/software/pipeline/pipeline-recalibrate-BAM/Nextflow/development/output/S2_v1.1.5_recalibration_table.grp
+        method: md5
+
+  - name: A-mini-n2-recal-only
+    nf_script: ./main.nf
+    params_file: ./test/single-recal-only.yaml
+    skip: true
+    verbose: true

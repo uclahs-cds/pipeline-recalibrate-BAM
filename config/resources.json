@@ -117,9 +117,27 @@
                 "max": 1
             },
             "memory": {
-                "min": "30 GB",
-                "fraction": 0.99,
-                "max": "30 GB"
+                "min": "1 GB",
+                "fraction": 0.0625,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.06,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -371,14 +389,32 @@
                 "max": 1
             },
             "memory": {
-                "min": "30 GB",
-                "fraction": 0.99,
-                "max": "30 GB"
+                "min": "1 GB",
+                "fraction": 0.03125,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.06,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.03,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
                 }
             }
         },
@@ -625,9 +661,27 @@
                 "max": 1
             },
             "memory": {
-                "min": "60 GB",
-                "fraction": 0.99,
-                "max": "60 GB"
+                "min": "1 GB",
+                "fraction": 0.015625,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.03,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.02,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -879,9 +933,27 @@
                 "max": 1
             },
             "memory": {
-                "min": "72 GB",
-                "fraction": 0.53,
-                "max": "72 GB"
+                "min": "2 GB",
+                "fraction": 0.00694,
+                "max": "2 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -1133,9 +1205,27 @@
                 "max": 1
             },
             "memory": {
-                "min": "500 GB",
-                "fraction": 0.51,
-                "max": "500 GB"
+                "min": "20 GB",
+                "fraction": 0.02,
+                "max": "20 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.02,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.00,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -1352,8 +1442,26 @@
             },
             "memory": {
                 "min": "1 GB",
-                "fraction": 0.53,
-                "max": "72 GB"
+                "fraction": 0.02,
+                "max": "20 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "exponential",
+                    "operand": 2
+                }
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
