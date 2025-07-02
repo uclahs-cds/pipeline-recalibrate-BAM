@@ -969,9 +969,9 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1.5 GB",
                 "fraction": 0.01,
-                "max": "2 GB"
+                "max": "1.5 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -987,9 +987,9 @@
                 "max": 2
             },
             "memory": {
-                "min": "8 GB",
-                "fraction": 0.06,
-                "max": "8 GB"
+                "min": "30 GB",
+                "fraction": 0.21,
+                "max": "30 GB"
             },
             "retry_strategy": {
                 "memory": {
@@ -1041,9 +1041,9 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.04,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {

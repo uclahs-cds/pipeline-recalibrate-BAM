@@ -1,63 +1,5 @@
 include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
-/*
-    Nextflow module for getting pileup summaries of BAMs
 
-    input:
-        reference_fasta: path to reference genome fasta file
-        reference_fasta_fai: path to index for reference fasta
-        reference_fasta_dict: path to dictionary for reference fasta
-        bundle_contest_hapmap_3p3_vcf_gz: path to contamination estimate variants
-        bundle_contest_hapmap_3p3_vcf_gz_tbi: path to index of contamination estimate VCFs
-        all_intervals: path to set of full target intervals
-        (sample_id, bam, bam_index): tuple of sample name, BAM path, and BAM index
-
-    params:
-        params.output_dir_base: string(path)
-        params.log_output_dir: string(path)
-        params.docker_image_gatk: string
-        params.gatk_command_mem_diff: float(memory)
-*/
-process run_GetPileupSummaries_GATK {
-    container params.docker_image_gatk
-    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
-      mode: "copy",
-      pattern: '*.table'
-
-    ext log_dir_suffix: { "-${sample_id}" }
-
-    input:
-    path(reference_fasta)
-    path(reference_fasta_fai)
-    path(reference_fasta_dict)
-    path(bundle_contest_hapmap_3p3_vcf_gz)
-    path(bundle_contest_hapmap_3p3_vcf_gz_tbi)
-    path(all_intervals)
-    tuple val(sample_id), path(bam), path(bam_index)
-
-    output:
-    tuple val(sample_id), path("*getpileupsummaries.table"), emit: pileupsummaries
-
-    script:
-    interval_options = all_intervals.collect{ "--intervals \"\$(realpath ${it})\"" }.join(' ')
-    output_filename = generate_standard_filename(
-        "GATK-${params.gatk_version}",
-        params.dataset_id,
-        sample_id,
-        [
-            'additional_information': "getpileupsummaries"
-        ]
-    )
-    """
-    set -euo pipefail
-    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
-        GetPileupSummaries \
-        --input ${bam} \
-        --reference ${reference_fasta} \
-        --variant ${bundle_contest_hapmap_3p3_vcf_gz} \
-        ${interval_options} \
-        --output ${output_filename}.table
-    """
-}
 
 /*
     Nextflow module for calculating contamination
@@ -180,5 +122,118 @@ process run_DepthOfCoverage_GATK {
         --partition-type readgroup \
         --partition-type library \
         ${interval_options}
+    """
+}
+
+/*
+    Nextflow module for getting pileup summaries of individual interval BAMs
+
+    input:
+        reference_fasta: path to reference genome fasta file
+        reference_fasta_fai: path to index for reference fasta
+        reference_fasta_dict: path to dictionary for reference fasta
+        bundle_contest_hapmap_3p3_vcf_gz: path to contamination estimate variants
+        bundle_contest_hapmap_3p3_vcf_gz_tbi: path to index of contamination estimate VCFs
+        tuple (sample_id, interval_bam, interval_id, interval_path): tuple of sample name, interval BAM, interval ID, and interval path
+
+    params:
+        params.output_dir_base: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_gatk: string
+        params.gatk_command_mem_diff: float(memory)
+*/
+process run_GetPileupSummaries_GATK {
+    container params.docker_image_gatk
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+      mode: "copy",
+      enabled: params.save_intermediate_files,
+      pattern: '*.table'
+
+    ext log_dir_suffix: { "-${sample_id}-${interval_id}" }
+
+    input:
+    path(reference_fasta)
+    path(reference_fasta_fai)
+    path(reference_fasta_dict)
+    path(bundle_contest_hapmap_3p3_vcf_gz)
+    path(bundle_contest_hapmap_3p3_vcf_gz_tbi)
+    tuple val(sample_id), path(interval_bam), path(interval_bam_index), val(interval_id), path(interval_path)
+
+    output:
+    tuple val(sample_id), val(interval_id), path("*getpileupsummaries*.table"), emit: interval_pileupsummaries
+
+    script:
+    // Use specific interval for this BAM
+    interval_option = "--intervals \"\$(realpath ${interval_path})\""
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_information': "getpileupsummaries-${interval_id}"
+        ]
+    )
+    """
+    set -euo pipefail
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+        GetPileupSummaries \
+        --input ${interval_bam} \
+        --reference ${reference_fasta} \
+        --variant ${bundle_contest_hapmap_3p3_vcf_gz} \
+        ${interval_option} \
+        --output ${output_filename}.table
+    """
+}
+
+/*
+    Nextflow module for concatenating per-interval pileup summaries
+
+    input:
+        tuple(sample_id, pileup_tables): tuple of sample ID and list of interval pileup table files
+
+    params:
+        params.output_dir_base: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_gatk: string
+*/
+process concatenate_PileupSummaries {
+    container params.docker_image_gatk
+    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
+      mode: "copy",
+      pattern: '*.table'
+
+    ext log_dir_suffix: { "-${sample_id}" }
+
+    input:
+    tuple val(sample_id), path(pileup_tables)
+
+    output:
+    tuple val(sample_id), path("*getpileupsummaries.table"), emit: concatenated_pileupsummaries
+
+    script:
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_information': "getpileupsummaries"
+        ]
+    )
+    """
+    set -euo pipefail
+
+    # Sort the input files by interval ID for consistent ordering
+    sorted_files=\$(ls ${pileup_tables.join(' ')} | sort -V)
+
+    # Get the first file to extract the header
+    first_file=\$(echo \$sorted_files | cut -d' ' -f1)
+
+    # Write header from first file
+    head -n 2 \$first_file > ${output_filename}.table
+
+    # Concatenate all files, skipping headers (first 2 lines) for all files
+    for file in \$sorted_files; do
+        tail -n +3 \$file >> ${output_filename}.table
+    done
     """
 }

@@ -65,6 +65,7 @@ include { recalibrate_base } from './module/base-recalibration.nf'
 include { merge_bams } from './module/merge-bam.nf'
 include {
     run_GetPileupSummaries_GATK
+    concatenate_PileupSummaries
     run_CalculateContamination_GATK
     run_DepthOfCoverage_GATK
 } from './module/summary-qc.nf'
@@ -248,18 +249,24 @@ workflow {
 
 
     /**
-    *   Summary and QC processes
-    merge_bams.out.output_ch_merge_bams
-        .map{ [it.sample, it.bam, it.bam_index] }
-        .set{ input_ch_merged_bams }
-
-    summary_intervals = (params.is_targeted) ?
-        Channel.from(params.intervals).collect() :
-        extract_GenomeIntervals.out.genomic_intervals
-
-    summary_intervals.combine(input_ch_merged_bams)
-        .map{ it[0] }
-        .set{ input_ch_summary_intervals }
+    *   Summary and QC processes - Parallelized Pileup Summaries
+    */
+    // Always run GetPileupSummaries on interval BAMs (from either base recalibration or indel realignment)
+    if (params.run_base_recalibration) {
+        // Use interval BAMs from base recalibration workflow
+        recalibrate_base.out.interval_bams
+            .map{ interval_data ->
+                [interval_data.sample, interval_data.bam, interval_data.bam_index, interval_data.interval_id, interval_data.interval_path]
+            }
+            .set{ input_ch_interval_pileups }
+    } else {
+        // Use interval BAMs from indel realignment workflow (since at least one must be run)
+        realign_indels.out.interval_bams
+            .map{ interval_data ->
+                [interval_data.sample, interval_data.bam, interval_data.bam_index, interval_data.interval_id, interval_data.interval_path]
+            }
+            .set{ input_ch_interval_pileups }
+    }
 
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
@@ -267,20 +274,29 @@ workflow {
         params.reference_fasta_dict,
         params.bundle_contest_hapmap_3p3_vcf_gz,
         params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
-        input_ch_summary_intervals,
-        input_ch_merged_bams
+        input_ch_interval_pileups
     )
+
+    // Group interval results by sample and concatenate
+    run_GetPileupSummaries_GATK.out.interval_pileupsummaries
+        .map{ sample_id, interval_id, pileup_file -> [sample_id, pileup_file] }
+        .groupTuple()
+        .set{ grouped_interval_pileups }
+
+    concatenate_PileupSummaries(grouped_interval_pileups)
+    
+    pileup_summaries_output = concatenate_PileupSummaries.out.concatenated_pileupsummaries
 
     validated_samples_with_index
         .filter{ it.sample_type == 'normal' }
         .map{ it -> [sanitize_string(it.id)] }
-        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
+        .join(pileup_summaries_output)
         .set{ normal_pileupsummaries }
 
     validated_samples_with_index
         .filter{ it.sample_type == 'tumor' }
         .map{ it -> [sanitize_string(it.id)] }
-        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
+        .join(pileup_summaries_output)
         .set{ tumor_pileupsummaries }
 
     normal_pileupsummaries.combine(tumor_pileupsummaries)
@@ -309,6 +325,19 @@ workflow {
 
     run_CalculateContamination_GATK(input_ch_calculate_contamination)
 
+    // Setup DepthOfCoverage - always use merged BAMs regardless of pileup summaries parallelization
+    merge_bams.out.output_ch_merge_bams
+        .map{ [it.sample, it.bam, it.bam_index] }
+        .set{ input_ch_merged_bams }
+
+    summary_intervals = (params.is_targeted) ?
+        Channel.from(params.intervals).collect() :
+        extract_GenomeIntervals.out.genomic_intervals
+
+    summary_intervals.combine(input_ch_merged_bams)
+        .map{ it[0] }
+        .set{ input_ch_summary_intervals }
+
     run_DepthOfCoverage_GATK(
         params.reference_fasta,
         params.reference_fasta_fai,
@@ -316,6 +345,5 @@ workflow {
         input_ch_summary_intervals,
         input_ch_merged_bams
     )
-    */
 }
 
