@@ -284,7 +284,7 @@ workflow {
         .set{ grouped_interval_pileups }
 
     concatenate_PileupSummaries(grouped_interval_pileups)
-    
+
     pileup_summaries_output = concatenate_PileupSummaries.out.concatenated_pileupsummaries
 
     validated_samples_with_index
