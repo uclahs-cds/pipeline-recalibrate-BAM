@@ -1,0 +1,8 @@
+---
+patient_id: TWGSAMIN000001
+run_indel_realignment: false
+run_base_recalibration: true
+input:
+  BAM:
+    tumor:
+      - "/hot/data/unregistered/SMC-HET/tumours/A-mini/bams/n1/output/S2.T-n1.bam"
