@@ -78,7 +78,7 @@
         },
         "run_BaseRecalibrator_GATK": {
           "cpus": "1",
-          "memory": "27.9 GB"
+          "memory": "1 GB"
         },
         "run_CalculateContamination_GATK": {
           "cpus": "1",
@@ -87,6 +87,10 @@
         "run_DepthOfCoverage_GATK": {
           "cpus": "1",
           "memory": "14 GB"
+        },
+        "run_GatherBQSRReports_GATK": {
+          "cpus": "1",
+          "memory": "1 GB"
         },
         "run_GetPileupSummaries_GATK": {
           "cpus": "1",
@@ -188,8 +192,8 @@
         },
         "run_BaseRecalibrator_GATK": {
           "memory": {
-            "operand": "2",
-            "strategy": "exponential"
+            "operand": "1 GB",
+            "strategy": "add"
           }
         },
         "run_CalculateContamination_GATK": {
@@ -202,6 +206,12 @@
           "memory": {
             "operand": "2",
             "strategy": "exponential"
+          }
+        },
+        "run_GatherBQSRReports_GATK": {
+          "memory": {
+            "operand": "1 GB",
+            "strategy": "add"
           }
         },
         "run_GetPileupSummaries_GATK": {
@@ -235,6 +245,8 @@
           }
         }
       },
+      "run_base_recalibration": true,
+      "run_indel_realignment": true,
       "samples_to_process": [
         {
           "id": "4915723",
@@ -243,7 +255,7 @@
         }
       ],
       "samtools_version": "1.17",
-      "save_intermediate_files": false,
+      "save_intermediate_files": true,
       "scatter_count": "50",
       "split_intervals_extra_args": "",
       "ucla_cds": true,
@@ -373,10 +385,10 @@
       "withName:run_BaseRecalibrator_GATK": {
         "cpus": "1",
         "memory": {
-          "1": "27.9 GB",
-          "2": "31 GB",
-          "3": "31 GB",
-          "closure": "retry_updater(27.9 GB, exponential, 2, $task.attempt, memory)"
+          "1": "1 GB",
+          "2": "2 GB",
+          "3": "3 GB",
+          "closure": "retry_updater(1 GB, add, 1 GB, $task.attempt, memory)"
         }
       },
       "withName:run_CalculateContamination_GATK": {
@@ -395,6 +407,15 @@
           "2": "27.9 GB",
           "3": "31 GB",
           "closure": "retry_updater(14 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
+      "withName:run_GatherBQSRReports_GATK": {
+        "cpus": "1",
+        "memory": {
+          "1": "1 GB",
+          "2": "2 GB",
+          "3": "3 GB",
+          "closure": "retry_updater(1 GB, add, 1 GB, $task.attempt, memory)"
         }
       },
       "withName:run_GetPileupSummaries_GATK": {
