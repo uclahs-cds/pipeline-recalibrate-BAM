@@ -224,6 +224,7 @@ workflow {
         }
 
         samples_for_merge = recalibrate_base.out.recalibrated_samples
+        // recalibrated_samples now contains interval_id
         processing_completion_signal = recalibrate_base.out.recalibrated_samples
             .map{ it.sample }
             .collect()
@@ -232,9 +233,9 @@ workflow {
         realign_indels.out.output_ch_realign_indels
             .map{
                 [
-                    'sample': it.sample_id,     // Use preserved sample_id instead of extracting
+                    'sample': it.sample_id,
                     'bam': it.bam,
-                    'interval_id': it.interval_id  // Include interval_id for robust merge process
+                    'interval_id': it.interval_id
                 ]
             }
             .set{ samples_for_merge }

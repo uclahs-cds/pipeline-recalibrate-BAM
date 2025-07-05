@@ -41,7 +41,7 @@ def getChromosomeOrderFromDict(dictPath) {
 
 /*
     Function to sort BAM files in natural chromosome order for GatherBamFiles
-    Input: List of tuples containing [bam_file, interval_id], reference dictionary path
+    Input: List of BAM files with interval IDs in their names, reference dictionary path
     Output: List of BAM files sorted in natural chromosome order
 */
 def sortBamsInNaturalOrder(bams, dictPath) {
@@ -50,17 +50,10 @@ def sortBamsInNaturalOrder(bams, dictPath) {
     
     def bamMap = [:]
     bams.each { bam ->
-        def intervalId
-        if (bam instanceof List && bam.size() == 2) {
-            // New format: [bam_file, interval_id]
-            intervalId = bam[1]
-            bamMap[intervalId] = bam[0]
-        } else {
-            // Legacy format: extract from filename (fallback)
-            intervalId = bam.name.find(/_(recalibrated|indelrealigned)-([^.]+)\.bam$/) { match, type, id -> id }
-            if (intervalId) {
-                bamMap[intervalId] = bam
-            }
+        // Extract interval ID from filename (improved pattern matching)
+        def intervalId = bam.name.find(/_(recalibrated|indelrealigned)-([^.]+)\.bam$/) { match, type, id -> id }
+        if (intervalId) {
+            bamMap[intervalId] = bam
         }
     }
 
@@ -78,7 +71,7 @@ def sortBamsInNaturalOrder(bams, dictPath) {
     Nextflow module for gathering BAM files using GatherBamFiles (for chromosome-based parallelization)
 
     input:
-        (sample_id, bams_with_intervals): tuple of sample ID and list of [bam, interval_id] tuples
+        (sample_id, bams): tuple of sample ID and list of BAMs to gather
 
     params:
         params.output_dir_base: string(path)
@@ -99,15 +92,23 @@ process run_GatherBamFiles_Picard {
     params.parallelize_by_chromosome
 
     input:
-    tuple val(sample_id), val(bams_with_intervals)
+    tuple val(sample_id), path(bams), val(interval_ids)
 
     output:
     tuple val(sample_id), path(output_file_name), emit: gathered_bam
-    path("*.bam"), emit: output_ch_deletion
+    path(bams), emit: output_ch_deletion
 
     script:
-    // Sort BAMs in natural chromosome order using reference dictionary
-    sorted_bams = sortBamsInNaturalOrder(bams_with_intervals, params.reference_fasta_dict)
+    def bamMap = [:]
+    for (int i=0; i<bams.size(); i++) {
+        bamMap[interval_ids[i]] = bams[i]
+    }
+    sorted_bams = []
+    getChromosomeOrderFromDict(params.reference_fasta_dict).each { chrId ->
+        if (bamMap.containsKey(chrId)) {
+            sorted_bams.add(bamMap[chrId])
+        }
+    }
     bam_list = sorted_bams.collect{ "-INPUT '$it'" }.join(' ')
     output_file_name = generate_standard_filename(
         params.aligner,
@@ -118,16 +119,8 @@ process run_GatherBamFiles_Picard {
         ]
     )
     output_file_name = "${output_file_name}.bam"
-    
-    // Create symlinks for BAM files to make them available in work directory
-    bam_symlinks = bams_with_intervals.collect { bam_info ->
-        def bam_file = bam_info instanceof List ? bam_info[0] : bam_info
-        return "ln -sf '${bam_file}' ./"
-    }.join(' && ')
-    
     """
     set -euo pipefail
-    ${bam_symlinks}
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=${workDir} \
         -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar GatherBamFiles \
         ${bam_list} \
@@ -291,26 +284,23 @@ process run_index_SAMtools {
 
 workflow merge_bams {
     take:
-    bams_to_merge  // Format: [sample, bam, interval_id] or [sample, bam] (legacy)
+    bams_to_merge  // Format: [sample, bam, interval_id]
 
     main:
-    // Handle both new format with interval_id and legacy format
+    // group by sample into list of bams and interval_ids
     bams_to_merge
-        .map{ input_data ->
-            if (input_data.containsKey('interval_id')) {
-                // New format: group by sample and include interval_id
-                [input_data.sample, [input_data.bam, input_data.interval_id]]
-            } else {
-                // Legacy format: group by sample only
-                [input_data.sample, input_data.bam]
-            }
-        }
+        .map{ [it.sample, [it.bam, it.interval_id]] }
         .groupTuple()
-        .set{ input_ch_merge }
+        .map{ sample_id, bam_interval_pairs ->
+            def bams = bam_interval_pairs.collect{ it[0] }
+            def ids = bam_interval_pairs.collect{ it[1] }
+            [sample_id, bams, ids]
+        }
+        .set{ input_ch_merge_struct }
 
     if (params.parallelize_by_chromosome) {
         // Use GatherBamFiles for chromosome-based parallelization
-        run_GatherBamFiles_Picard(input_ch_merge)
+        run_GatherBamFiles_Picard(input_ch_merge_struct)
 
         // Don't delete immediately - return for coordinated deletion
         run_GatherBamFiles_Picard.out.output_ch_deletion
@@ -321,18 +311,11 @@ workflow merge_bams {
         input_ch_index = run_GatherBamFiles_Picard.out.gathered_bam
 
     } else {
-        // Use MergeSamFiles for scatter-count based parallelization
-        // Extract just the BAM files for merging (legacy compatibility)
-        input_ch_merge
-            .map{ sample_id, bam_data ->
-                def bams = bam_data.collect { item ->
-                    item instanceof List ? item[0] : item
-                }
-                [sample_id, bams]
-            }
-            .set{ input_ch_merge_files_only }
-
-        run_MergeSamFiles_Picard(input_ch_merge_files_only)
+        // scatter mode: we can ignore interval_ids for merge sam files
+        input_ch_merge_struct
+            .map{ sample_id, bams, ids -> [sample_id, bams] }
+            .set{ input_ch_merge }
+        run_MergeSamFiles_Picard(input_ch_merge)
 
         // Don't delete immediately - return for coordinated deletion
         run_MergeSamFiles_Picard.out.output_ch_deletion

@@ -274,7 +274,7 @@ workflow recalibrate_base {
             [
                 'sample': sample_id,
                 'bam': bam_file,
-                'interval_id': interval_id  // Include interval_id for robust merge process
+                'interval_id': interval_id
             ]
         }
         .set{ output_ch_base_recalibration }
