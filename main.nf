@@ -247,8 +247,6 @@ workflow {
     merge_bams(samples_for_merge)
 
 
-    /**
-    *   Summary and QC processes
     merge_bams.out.output_ch_merge_bams
         .map{ [it.sample, it.bam, it.bam_index] }
         .set{ input_ch_merged_bams }
@@ -316,6 +314,5 @@ workflow {
         input_ch_summary_intervals,
         input_ch_merged_bams
     )
-    */
 }
 
