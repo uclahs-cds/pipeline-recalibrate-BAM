@@ -17,7 +17,7 @@ partition "**Unparallelized Setup**\nThis block is run once\nregardless of sampl
         ----
         Split reference genome into
         interval lists by chomosome
-        (1-22, X, Y, M, nonassembled);
+        (1-22, X, Y, M, noncanonical);
     else (No)
         :==run_SplitIntervals_GATK
         ----

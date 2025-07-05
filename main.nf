@@ -190,7 +190,7 @@ workflow {
 
         processed_samples = realign_indels.out.output_ch_realign_indels
         completion_signal = realign_indels.out.output_ch_realign_indels
-            .map{ it.has_unmapped }
+            .map{ it.is_noncanonical_contig }
             .collect()
     } else {
         // For base recalibration only mode, prepare raw BAM input with sample IDs
@@ -202,7 +202,7 @@ workflow {
                     'bam_index': sample.index,
                     'interval_id': interval.interval_id,
                     'interval': interval.interval_path,
-                    'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000'),
+                    'is_noncanonical_contig': (interval.interval_id == 'noncanonical' || interval.interval_id == '0000'),
                     'sample_id': sample.id  // Include the actual sample ID
                 ]
             }

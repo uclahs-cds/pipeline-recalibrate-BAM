@@ -135,7 +135,7 @@ process run_GatherBQSRReports_GATK {
         input_bam: path to input BAM (raw or indel realigned)
         input_bam_index: path to input BAM index
         interval: path to specific intervals file associated with input BAM
-        includes_unmapped: boolean to indicate if unmapped reads are included in input BAM
+        includes_noncanonical_contigs: boolean to indicate if noncanonical contigs are included in input BAM
         sample_id: Identifier for sample being processed
         recalibration_table: path to gathered base recalibration table
 
@@ -164,16 +164,16 @@ process run_ApplyBQSR_GATK {
           path(input_bam_index),
           val(interval_id),
           path(interval),
-          val(includes_unmapped),
+          val(includes_noncanonical_contigs),
           val(sample_id),
           path(recalibration_table)
 
     output:
-    tuple path("${output_filename}"), path("${output_filename}.bai"), val(interval_id), path(interval), val(includes_unmapped), val(sample_id), emit: output_ch_apply_bqsr
+    tuple path("${output_filename}"), path("${output_filename}.bai"), val(interval_id), path(interval), val(includes_noncanonical_contigs), val(sample_id), emit: output_ch_apply_bqsr
     tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
 
     script:
-    unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
+    unmapped_interval_option = (includes_noncanonical_contigs) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
     output_filename = "${generate_standard_filename(params.aligner, params.dataset_id, sample_id, ['additional_tools': ["GATK-${params.gatk_version}"]])}_recalibrated-${interval_id}.bam"
     """
@@ -220,7 +220,7 @@ workflow recalibrate_base {
                 sample_data.bam_index,
                 sample_data.interval_id,
                 sample_data.interval,
-                sample_data.has_unmapped,
+                sample_data.is_noncanonical_contig,
                 sample_id
             ]
         }
@@ -250,8 +250,8 @@ workflow recalibrate_base {
 
     // Combine input samples with their gathered recalibration tables
     input_ch_base_recalibrator
-        .map{ bam, bam_index, interval_id, interval, has_unmapped, sample_id ->
-            [sample_id, [bam, bam_index, interval_id, interval, has_unmapped, sample_id]]
+        .map{ bam, bam_index, interval_id, interval, is_noncanonical_contig, sample_id ->
+            [sample_id, [bam, bam_index, interval_id, interval, is_noncanonical_contig, sample_id]]
         }
         .combine(
             run_GatherBQSRReports_GATK.out.gathered_recalibration_table,
@@ -270,7 +270,7 @@ workflow recalibrate_base {
     )
 
     run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
-        .map{ bam_file, bai_file, interval_id, interval, has_unmapped, sample_id ->
+        .map{ bam_file, bai_file, interval_id, interval, is_noncanonical_contig, sample_id ->
             [
                 'sample': sample_id,
                 'bam': bam_file
@@ -280,7 +280,7 @@ workflow recalibrate_base {
 
     // Also emit interval BAMs with their interval information for pileup summaries
     run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
-        .map{ bam_file, bai_file, interval_id, interval, has_unmapped, sample_id ->
+        .map{ bam_file, bai_file, interval_id, interval, is_noncanonical_contig, sample_id ->
             [
                 'sample': sample_id,
                 'bam': bam_file,
