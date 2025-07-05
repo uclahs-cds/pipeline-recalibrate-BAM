@@ -273,7 +273,8 @@ workflow recalibrate_base {
         .map{ bam_file, bai_file, interval_id, interval, is_noncanonical_contig, sample_id ->
             [
                 'sample': sample_id,
-                'bam': bam_file
+                'bam': bam_file,
+                'interval_id': interval_id  // Include interval_id for robust merge process
             ]
         }
         .set{ output_ch_base_recalibration }

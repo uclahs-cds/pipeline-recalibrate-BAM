@@ -12,23 +12,55 @@ include {
 include { calculate_sha512 } from './checksum.nf'
 
 /*
+    Function to create chromosome ordering from reference dictionary
+    Input: Path to reference dictionary file
+    Output: List of chromosome names in reference order
+*/
+def getChromosomeOrderFromDict(dictPath) {
+    def chromosomes = []
+    def dictFile = file(dictPath)
+    
+    if (dictFile.exists()) {
+        dictFile.eachLine { line ->
+            if (line.startsWith('@SQ')) {
+                def matcher = line =~ /SN:(\S+)/
+                if (matcher.find()) {
+                    chromosomes.add(matcher.group(1))
+                }
+            }
+        }
+    }
+    
+    // Add noncanonical as last if not already present
+    if (!chromosomes.contains('noncanonical')) {
+        chromosomes.add('noncanonical')
+    }
+    
+    return chromosomes
+}
+
+/*
     Function to sort BAM files in natural chromosome order for GatherBamFiles
-    Input: List of BAM files with interval IDs in their names
+    Input: List of tuples containing [bam_file, interval_id], reference dictionary path
     Output: List of BAM files sorted in natural chromosome order
 */
-def sortBamsInNaturalOrder(bams) {
-    def chromosomeOrder = [
-        'chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10',
-        'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20',
-        'chr21', 'chr22', 'chrX', 'chrY', 'chrM', 'noncanonical'
-    ]
-
+def sortBamsInNaturalOrder(bams, dictPath) {
+    // Get chromosome order from reference dictionary
+    def chromosomeOrder = getChromosomeOrderFromDict(dictPath)
+    
     def bamMap = [:]
     bams.each { bam ->
-        // Handle both recalibrated and indelrealigned BAM filename patterns
-        def intervalId = bam.name.find(/_(recalibrated|indelrealigned)-([^.]+)\.bam$/) { match, type, id -> id }
-        if (intervalId) {
-            bamMap[intervalId] = bam
+        def intervalId
+        if (bam instanceof List && bam.size() == 2) {
+            // New format: [bam_file, interval_id]
+            intervalId = bam[1]
+            bamMap[intervalId] = bam[0]
+        } else {
+            // Legacy format: extract from filename (fallback)
+            intervalId = bam.name.find(/_(recalibrated|indelrealigned)-([^.]+)\.bam$/) { match, type, id -> id }
+            if (intervalId) {
+                bamMap[intervalId] = bam
+            }
         }
     }
 
@@ -46,13 +78,14 @@ def sortBamsInNaturalOrder(bams) {
     Nextflow module for gathering BAM files using GatherBamFiles (for chromosome-based parallelization)
 
     input:
-        (sample_id, bams): tuple of sample ID and list of BAMs to gather
+        (sample_id, bams_with_intervals): tuple of sample ID and list of [bam, interval_id] tuples
 
     params:
         params.output_dir_base: string(path)
         params.log_output_dir: string(path)
         params.docker_image_picard: string
         params.gatk_command_mem_diff: float(memory)
+        params.reference_fasta_dict: string(path)
 */
 process run_GatherBamFiles_Picard {
     container params.docker_image_picard
@@ -66,15 +99,15 @@ process run_GatherBamFiles_Picard {
     params.parallelize_by_chromosome
 
     input:
-    tuple val(sample_id), path(bams)
+    tuple val(sample_id), val(bams_with_intervals)
 
     output:
     tuple val(sample_id), path(output_file_name), emit: gathered_bam
-    path(bams), emit: output_ch_deletion
+    path("*.bam"), emit: output_ch_deletion
 
     script:
-    // Sort BAMs in natural chromosome order
-    sorted_bams = sortBamsInNaturalOrder(bams)
+    // Sort BAMs in natural chromosome order using reference dictionary
+    sorted_bams = sortBamsInNaturalOrder(bams_with_intervals, params.reference_fasta_dict)
     bam_list = sorted_bams.collect{ "-INPUT '$it'" }.join(' ')
     output_file_name = generate_standard_filename(
         params.aligner,
@@ -85,8 +118,16 @@ process run_GatherBamFiles_Picard {
         ]
     )
     output_file_name = "${output_file_name}.bam"
+    
+    // Create symlinks for BAM files to make them available in work directory
+    bam_symlinks = bams_with_intervals.collect { bam_info ->
+        def bam_file = bam_info instanceof List ? bam_info[0] : bam_info
+        return "ln -sf '${bam_file}' ./"
+    }.join(' && ')
+    
     """
     set -euo pipefail
+    ${bam_symlinks}
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=${workDir} \
         -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar GatherBamFiles \
         ${bam_list} \
@@ -250,11 +291,20 @@ process run_index_SAMtools {
 
 workflow merge_bams {
     take:
-    bams_to_merge  // Back to original format: [sample, bam]
+    bams_to_merge  // Format: [sample, bam, interval_id] or [sample, bam] (legacy)
 
     main:
+    // Handle both new format with interval_id and legacy format
     bams_to_merge
-        .map{ [it.sample, it.bam] }
+        .map{ input_data ->
+            if (input_data.containsKey('interval_id')) {
+                // New format: group by sample and include interval_id
+                [input_data.sample, [input_data.bam, input_data.interval_id]]
+            } else {
+                // Legacy format: group by sample only
+                [input_data.sample, input_data.bam]
+            }
+        }
         .groupTuple()
         .set{ input_ch_merge }
 
@@ -272,7 +322,17 @@ workflow merge_bams {
 
     } else {
         // Use MergeSamFiles for scatter-count based parallelization
-        run_MergeSamFiles_Picard(input_ch_merge)
+        // Extract just the BAM files for merging (legacy compatibility)
+        input_ch_merge
+            .map{ sample_id, bam_data ->
+                def bams = bam_data.collect { item ->
+                    item instanceof List ? item[0] : item
+                }
+                [sample_id, bams]
+            }
+            .set{ input_ch_merge_files_only }
+
+        run_MergeSamFiles_Picard(input_ch_merge_files_only)
 
         // Don't delete immediately - return for coordinated deletion
         run_MergeSamFiles_Picard.out.output_ch_deletion

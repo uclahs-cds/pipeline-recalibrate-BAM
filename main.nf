@@ -233,7 +233,8 @@ workflow {
             .map{
                 [
                     'sample': it.sample_id,     // Use preserved sample_id instead of extracting
-                    'bam': it.bam
+                    'bam': it.bam,
+                    'interval_id': it.interval_id  // Include interval_id for robust merge process
                 ]
             }
             .set{ samples_for_merge }
