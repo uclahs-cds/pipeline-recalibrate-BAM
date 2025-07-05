@@ -182,6 +182,24 @@
                 }
             }
         },
+        "run_GatherBamFiles_Picard": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.25,
+                "max": 2
+            },
+            "memory": {
+                "min": "8 GB",
+                "fraction": 0.5,
+                "max": "8 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "8 GB"
+                }
+            }
+        },
         "deduplicate_records_SAMtools": {
             "cpus": {
                 "min": 2,
@@ -437,6 +455,24 @@
             }
         },
         "run_MergeSamFiles_Picard": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.125,
+                "max": 2
+            },
+            "memory": {
+                "min": "8 GB",
+                "fraction": 0.25,
+                "max": "8 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "8 GB"
+                }
+            }
+        },
+        "run_GatherBamFiles_Picard": {
             "cpus": {
                 "min": 2,
                 "fraction": 0.125,
@@ -726,6 +762,24 @@
                 }
             }
         },
+        "run_GatherBamFiles_Picard": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.063,
+                "max": 2
+            },
+            "memory": {
+                "min": "8 GB",
+                "fraction": 0.125,
+                "max": "8 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "8 GB"
+                }
+            }
+        },
         "deduplicate_records_SAMtools": {
             "cpus": {
                 "min": 2,
@@ -981,6 +1035,24 @@
             }
         },
         "run_MergeSamFiles_Picard": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.028,
+                "max": 2
+            },
+            "memory": {
+                "min": "30 GB",
+                "fraction": 0.208,
+                "max": "30 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "30 GB"
+                }
+            }
+        },
+        "run_GatherBamFiles_Picard": {
             "cpus": {
                 "min": 2,
                 "fraction": 0.028,
@@ -1270,6 +1342,24 @@
                 }
             }
         },
+        "run_GatherBamFiles_Picard": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.031,
+                "max": 2
+            },
+            "memory": {
+                "min": "60 GB",
+                "fraction": 0.06,
+                "max": "60 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "60 GB"
+                }
+            }
+        },
         "deduplicate_records_SAMtools": {
             "cpus": {
                 "min": 2,
@@ -1489,6 +1579,24 @@
             }
         },
         "run_MergeSamFiles_Picard": {
+            "cpus": {
+                "min": 2,
+                "fraction": 0.028,
+                "max": 2
+            },
+            "memory": {
+                "min": "2 GB",
+                "fraction": 0.208,
+                "max": "60 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "60 GB"
+                }
+            }
+        },
+        "run_GatherBamFiles_Picard": {
             "cpus": {
                 "min": 2,
                 "fraction": 0.028,

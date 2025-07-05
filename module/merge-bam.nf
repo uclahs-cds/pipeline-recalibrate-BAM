@@ -10,8 +10,92 @@ include {
             ]
         )
 include { calculate_sha512 } from './checksum.nf'
+
 /*
-    Nextflow module for merging BAM files
+    Function to sort BAM files in natural chromosome order for GatherBamFiles
+    Input: List of BAM files with interval IDs in their names
+    Output: List of BAM files sorted in natural chromosome order
+*/
+def sortBamsInNaturalOrder(bams) {
+    def chromosomeOrder = [
+        'chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10',
+        'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20',
+        'chr21', 'chr22', 'chrX', 'chrY', 'chrM', 'nonassembled'
+    ]
+
+    def bamMap = [:]
+    bams.each { bam ->
+        // Handle both recalibrated and indelrealigned BAM filename patterns
+        def intervalId = bam.name.find(/_(recalibrated|indelrealigned)-([^.]+)\.bam$/) { match, type, id -> id }
+        if (intervalId) {
+            bamMap[intervalId] = bam
+        }
+    }
+
+    def sortedBams = []
+    chromosomeOrder.each { chrId ->
+        if (bamMap.containsKey(chrId)) {
+            sortedBams.add(bamMap[chrId])
+        }
+    }
+
+    return sortedBams
+}
+
+/*
+    Nextflow module for gathering BAM files using GatherBamFiles (for chromosome-based parallelization)
+
+    input:
+        (sample_id, bams): tuple of sample ID and list of BAMs to gather
+
+    params:
+        params.output_dir_base: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_picard: string
+        params.gatk_command_mem_diff: float(memory)
+*/
+process run_GatherBamFiles_Picard {
+    container params.docker_image_picard
+    publishDir path: "${params.output_dir_base}/output",
+        mode: "copy",
+        pattern: "${output_file_name}"
+
+    ext log_dir_suffix: { "-${sample_id}" }
+
+    when:
+    params.parallelize_by_chromosome
+
+    input:
+    tuple val(sample_id), path(bams)
+
+    output:
+    tuple val(sample_id), path(output_file_name), emit: gathered_bam
+    path(bams), emit: output_ch_deletion
+
+    script:
+    // Sort BAMs in natural chromosome order
+    sorted_bams = sortBamsInNaturalOrder(bams)
+    bam_list = sorted_bams.collect{ "-INPUT '$it'" }.join(' ')
+    output_file_name = generate_standard_filename(
+        params.aligner,
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_tools': ["GATK-${params.gatk_version}"]
+        ]
+    )
+    output_file_name = "${output_file_name}.bam"
+    """
+    set -euo pipefail
+    java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -Djava.io.tmpdir=${workDir} \
+        -jar /usr/local/share/picard-slim-2.26.10-0/picard.jar GatherBamFiles \
+        ${bam_list} \
+        -OUTPUT ${output_file_name}
+    """
+}
+
+/*
+    Nextflow module for merging BAM files (for scatter-count based parallelization)
 
     input:
         (sample_id, bams): tuple of sample ID and list of BAMs to merge
@@ -33,10 +117,13 @@ process run_MergeSamFiles_Picard {
 
     publishDir path: "${params.output_dir_base}/output",
         mode: "copy",
-        enabled: params.parallelize_by_chromosome,
+        enabled: false,  // Never publish directly; always go through deduplication when not using chromosome parallelization
         pattern: "${output_file_name}"
 
     ext log_dir_suffix: { "-${sample_id}" }
+
+    when:
+    !params.parallelize_by_chromosome
 
     input:
     tuple val(sample_id), path(bams)
@@ -47,16 +134,13 @@ process run_MergeSamFiles_Picard {
 
     script:
     all_bams = bams.collect{ "-INPUT '$it'" }.toSorted().join(' ')
-    additional_information = (params.parallelize_by_chromosome) ?
-        "" :
-        "realigned_recalibrated_merged"
     output_file_name = generate_standard_filename(
         params.aligner,
         params.dataset_id,
         sample_id,
         [
             'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': additional_information
+            'additional_information': "realigned_recalibrated_merged"
         ]
     )
     output_file_name = "${output_file_name}.bam"
@@ -166,7 +250,7 @@ process run_index_SAMtools {
 
 workflow merge_bams {
     take:
-    bams_to_merge
+    bams_to_merge  // Back to original format: [sample, bam]
 
     main:
     bams_to_merge
@@ -174,23 +258,36 @@ workflow merge_bams {
         .groupTuple()
         .set{ input_ch_merge }
 
-    run_MergeSamFiles_Picard(input_ch_merge)
+    if (params.parallelize_by_chromosome) {
+        // Use GatherBamFiles for chromosome-based parallelization
+        run_GatherBamFiles_Picard(input_ch_merge)
 
-    remove_unmerged_BAMs(
-        run_MergeSamFiles_Picard.out.output_ch_deletion.flatten(),
-        "merge_complete"
-    )
+        // Don't delete immediately - return for coordinated deletion
+        run_GatherBamFiles_Picard.out.output_ch_deletion
+            .flatten()
+            .set{ interval_bams_for_deletion }
 
-    deduplicate_records_SAMtools(run_MergeSamFiles_Picard.out.merged_bam)
+        // No deduplication needed for chromosome-based parallelization
+        input_ch_index = run_GatherBamFiles_Picard.out.gathered_bam
 
-    remove_merged_BAM(
-        deduplicate_records_SAMtools.out.bam_for_deletion.flatten(),
-        "deduplication_complete"
-    )
+    } else {
+        // Use MergeSamFiles for scatter-count based parallelization
+        run_MergeSamFiles_Picard(input_ch_merge)
 
-    input_ch_index = (params.parallelize_by_chromosome) ?
-        run_MergeSamFiles_Picard.out.merged_bam :
-        deduplicate_records_SAMtools.out.dedup_bam
+        // Don't delete immediately - return for coordinated deletion
+        run_MergeSamFiles_Picard.out.output_ch_deletion
+            .flatten()
+            .set{ interval_bams_for_deletion }
+
+        deduplicate_records_SAMtools(run_MergeSamFiles_Picard.out.merged_bam)
+
+        remove_merged_BAM(
+            deduplicate_records_SAMtools.out.bam_for_deletion.flatten(),
+            "deduplication_complete"
+        )
+
+        input_ch_index = deduplicate_records_SAMtools.out.dedup_bam
+    }
 
     run_index_SAMtools(input_ch_index)
 
@@ -213,4 +310,5 @@ workflow merge_bams {
 
     emit:
     output_ch_merge_bams = output_ch_merge_bams
+    interval_bams_for_deletion = interval_bams_for_deletion
 }
