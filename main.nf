@@ -151,6 +151,18 @@ workflow {
                 'interval_path': interval_path
             ]
         }
+        .filter{ it.interval_id == 'noncanonical' }
+        .concat(
+            run_SplitIntervals_GATK.out.interval_list
+                .flatten()
+                .map{ interval_path ->
+                    [
+                        'interval_id': file(interval_path).getName().replace('-contig.interval_list', ''),
+                        'interval_path': interval_path
+                    ]
+                }
+                .filter{ it.interval_id != 'noncanonical' }
+        )
         .set{ input_ch_intervals }
 
 
