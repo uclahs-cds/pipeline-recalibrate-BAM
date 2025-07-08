@@ -58,7 +58,7 @@ process run_SplitIntervals_GATK {
             --scatter-count 1 \
             -O ./
 
-        mv 0000-scattered.interval_list nonassembled-contig.interval_list
+        mv 0000-scattered.interval_list noncanonical-contig.interval_list
     else
         gatk SplitIntervals \
             -R ${reference_fasta} \

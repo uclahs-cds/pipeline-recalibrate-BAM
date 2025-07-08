@@ -110,12 +110,12 @@ process run_IndelRealigner_GATK {
     tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), path(target_intervals_RTC), val(sample_id)
 
     output:
-    tuple path("${output_filename}.bam"), path("${output_filename}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), val(sample_id), emit: output_ch_indel_realignment
+    tuple path("${output_filename}.bam"), path("${output_filename}.bai"), val(interval_id), path(scatter_intervals), val(is_noncanonical_contig), val(sample_id), emit: output_ch_indel_realignment
 
     script:
     arg_bam = bam.collect{ "--input_file '$it'" }.join(' ')
-    has_unmapped = (interval_id == 'nonassembled' || interval_id == '0000')
-    unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
+    is_noncanonical_contig = (interval_id == 'noncanonical' || interval_id == '0000')
+    unmapped_interval_option = (is_noncanonical_contig) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     output_filename = generate_standard_filename(
         params.aligner,
@@ -190,7 +190,7 @@ workflow realign_indels {
                 'bam_index': it[1],
                 'interval_id': it[2],
                 'interval': it[3],
-                'has_unmapped': it[4],
+                'is_noncanonical_contig': it[4],
                 'sample_id': it[5]
             ]
         }
@@ -198,7 +198,7 @@ workflow realign_indels {
 
     // Also emit interval BAMs with their interval information for pileup summaries
     run_IndelRealigner_GATK.out.output_ch_indel_realignment
-        .map{ bam_file, bam_index, interval_id, interval_path, has_unmapped, sample_id ->
+        .map{ bam_file, bam_index, interval_id, interval_path, is_noncanonical_contig, sample_id ->
             // Use the preserved sample_id instead of extracting from filename
             [
                 'sample': sample_id,

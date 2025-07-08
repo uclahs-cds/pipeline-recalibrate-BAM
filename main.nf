@@ -71,6 +71,13 @@ include {
 } from './module/summary-qc.nf'
 include { delete_input } from './module/delete-input.nf'
 include { sanitize_string } from './external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { remove_intermediate_files } from './external/pipeline-Nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
+    options: [
+        save_intermediate_files: params.save_intermediate_files,
+        output_dir: params.output_dir_base,
+        log_output_dir: "${params.log_output_dir}/process-log"
+        ]
+    )
 
 // Returns the index file for the given bam or vcf
 def indexFile(bam_or_vcf) {
@@ -144,6 +151,18 @@ workflow {
                 'interval_path': interval_path
             ]
         }
+        .filter{ it.interval_id == 'noncanonical' }
+        .concat(
+            run_SplitIntervals_GATK.out.interval_list
+                .flatten()
+                .map{ interval_path ->
+                    [
+                        'interval_id': file(interval_path).getName().replace('-contig.interval_list', ''),
+                        'interval_path': interval_path
+                    ]
+                }
+                .filter{ it.interval_id != 'noncanonical' }
+        )
         .set{ input_ch_intervals }
 
 
@@ -183,7 +202,7 @@ workflow {
 
         processed_samples = realign_indels.out.output_ch_realign_indels
         completion_signal = realign_indels.out.output_ch_realign_indels
-            .map{ it.has_unmapped }
+            .map{ it.is_noncanonical_contig }
             .collect()
     } else {
         // For base recalibration only mode, prepare raw BAM input with sample IDs
@@ -195,7 +214,7 @@ workflow {
                     'bam_index': sample.index,
                     'interval_id': interval.interval_id,
                     'interval': interval.interval_path,
-                    'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000'),
+                    'is_noncanonical_contig': (interval.interval_id == 'noncanonical' || interval.interval_id == '0000'),
                     'sample_id': sample.id  // Include the actual sample ID
                 ]
             }
@@ -217,6 +236,7 @@ workflow {
         }
 
         samples_for_merge = recalibrate_base.out.recalibrated_samples
+        // recalibrated_samples now contains interval_id
         processing_completion_signal = recalibrate_base.out.recalibrated_samples
             .map{ it.sample }
             .collect()
@@ -225,8 +245,9 @@ workflow {
         realign_indels.out.output_ch_realign_indels
             .map{
                 [
-                    'sample': it.sample_id,     // Use preserved sample_id instead of extracting
-                    'bam': it.bam
+                    'sample': it.sample_id,
+                    'bam': it.bam,
+                    'interval_id': it.interval_id
                 ]
             }
             .set{ samples_for_merge }
@@ -345,5 +366,56 @@ workflow {
         input_ch_summary_intervals,
         input_ch_merged_bams
     )
+
+    /**
+    *   Per-sample coordinated deletion of interval BAMs
+    *   Delete each sample's interval BAMs as soon as that sample completes both workflows
+    */
+    if (params.run_base_recalibration || params.run_indel_realignment) {
+        // Get per-sample merge completion signals
+        merge_bams.out.output_ch_merge_bams
+            .map{ merge_data -> [merge_data.sample, "merge_complete"] }
+            .set{ per_sample_merge_completion }
+        
+        // Get per-sample pileup completion signals
+        concatenate_PileupSummaries.out.concatenated_pileupsummaries
+            .map{ sample_id, pileup_file -> [sample_id, "pileup_complete"] }
+            .set{ per_sample_pileup_completion }
+        
+        // Organize interval BAMs by sample for deletion
+        if (params.run_base_recalibration) {
+            // Use recalibrated interval BAMs
+            recalibrate_base.out.interval_bams
+                .map{ interval_data -> [interval_data.sample, interval_data.bam] }
+                .groupTuple()
+                .set{ interval_bams_by_sample }
+        } else {
+            // Use indel realigned interval BAMs (indel realignment only mode)
+            realign_indels.out.interval_bams
+                .map{ interval_data -> [interval_data.sample, interval_data.bam] }
+                .groupTuple()
+                .set{ interval_bams_by_sample }
+        }
+        
+        // Per-sample coordinated deletion: delete as soon as THIS sample completes both workflows
+        per_sample_merge_completion
+            .join(per_sample_pileup_completion, by: 0)  // Join by sample_id, wait for both workflows
+            .join(interval_bams_by_sample, by: 0)       // Get this sample's interval BAMs
+            .map{ sample_id, merge_signal, pileup_signal, interval_bams -> 
+                [sample_id, interval_bams]
+            }
+            .set{ ready_for_deletion_by_sample }
+        
+        // Flatten the BAMs for deletion
+        ready_for_deletion_by_sample
+            .map{ sample_id, interval_bams -> interval_bams }
+            .flatten()
+            .set{ coordinated_deletion_files }
+
+        remove_intermediate_files(
+            coordinated_deletion_files,
+            "sample_workflows_complete"
+        )
+    }
 }
 
