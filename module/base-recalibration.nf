@@ -169,12 +169,13 @@ process run_ApplyBQSR_GATK {
           path(recalibration_table)
 
     output:
-    path("*_recalibrated-*"), emit: output_ch_apply_bqsr
+    tuple path("${output_filename}"), path("${output_filename}.bai"), val(interval_id), path(interval), val(includes_unmapped), val(sample_id), emit: output_ch_apply_bqsr
     tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
+    output_filename = "${generate_standard_filename(params.aligner, params.dataset_id, sample_id, ['additional_tools': ["GATK-${params.gatk_version}"]])}_recalibrated-${interval_id}.bam"
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
@@ -189,7 +190,10 @@ process run_ApplyBQSR_GATK {
         --sample ${sample_id} 2> .command.err | \
         samtools view -h | \
         awk '(/^@RG/ && /SM:${sample_id}/) || ! /^@RG/' | \
-        samtools view -b -o ${generate_standard_filename(params.aligner, params.dataset_id, sample_id, ['additional_tools': ["GATK-${params.gatk_version}"]])}_recalibrated-${interval_id}.bam
+        samtools view -b -o ${output_filename}
+    
+    # Index the output BAM file for GetPileupSummaries
+    samtools index ${output_filename}
     """
 }
 
@@ -266,14 +270,26 @@ workflow recalibrate_base {
     )
 
     run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
-        .flatten()
-        .map{
+        .map{ bam_file, bai_file, interval_id, interval, has_unmapped, sample_id ->
             [
-                'sample': it.baseName.split("_")[3], // sample ID
-                'bam': it
+                'sample': sample_id,
+                'bam': bam_file
             ]
         }
         .set{ output_ch_base_recalibration }
+
+    // Also emit interval BAMs with their interval information for pileup summaries
+    run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
+        .map{ bam_file, bai_file, interval_id, interval, has_unmapped, sample_id ->
+            [
+                'sample': sample_id,
+                'bam': bam_file,
+                'bam_index': bai_file,
+                'interval_id': interval_id,
+                'interval_path': interval
+            ]
+        }
+        .set{ output_ch_interval_bams }
 
     // Handle intermediate file deletion
     // Only delete files if they came from indel realignment (not original input BAMs)
@@ -294,4 +310,5 @@ workflow recalibrate_base {
 
     emit:
     recalibrated_samples = output_ch_base_recalibration
+    interval_bams = output_ch_interval_bams
 }

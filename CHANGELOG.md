@@ -12,12 +12,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Add tool choice for processing steps with `run_indel_realignment` and `run_base_recalibration` parameters
 - Added F8 option to resource configurations
+- Parallel GetPileupSummaries workflow for improved performance
 
 ### Changed
 
 - Update to branch of `pipeline-Nextflow-config`
 - Replace node-specific configs with computed `resources.json` file
 - Use `resource_handler.handle_resources()`
+- Expose interval BAMs for pileup processing
+- Updated flow diagram documentation
+
+### Fixed
+
+- Sporadic sample-ID issue in BAM processing
 
 ## [1.0.2] - 2024-10-08
 

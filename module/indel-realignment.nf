@@ -196,6 +196,21 @@ workflow realign_indels {
         }
         .set{ output_ch_realign_indels }
 
+    // Also emit interval BAMs with their interval information for pileup summaries
+    run_IndelRealigner_GATK.out.output_ch_indel_realignment
+        .map{ bam_file, bam_index, interval_id, interval_path, has_unmapped, sample_id ->
+            // Use the preserved sample_id instead of extracting from filename
+            [
+                'sample': sample_id,
+                'bam': bam_file,
+                'bam_index': bam_index,
+                'interval_id': interval_id,
+                'interval_path': interval_path
+            ]
+        }
+        .set{ output_ch_interval_bams }
+
     emit:
     output_ch_realign_indels = output_ch_realign_indels
+    interval_bams = output_ch_interval_bams
 }
