@@ -8,6 +8,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Unreleased
 
+### Added
+
+- Add tool choice for processing steps with `run_indel_realignment` and `run_base_recalibration` parameters
+- Added F8 option to resource configurations
+
 ### Changed
 
 - Update to branch of `pipeline-Nextflow-config`
