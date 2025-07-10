@@ -39,10 +39,10 @@ process run_RealignerTargetCreator_GATK {
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
     path(original_intervals)
-    tuple path(bam), path(bam_index), val(interval_id), path(interval), val(sample_id)
+    tuple path(bam), path(bam_index), val(interval_id), path(interval), val(sample_ids)
 
     output:
-    tuple path(bam), path(bam_index), val(interval_id), path(interval), path("${output_rtc_intervals}"), val(sample_id), emit: ir_targets
+    tuple path(bam), path(bam_index), val(interval_id), path(interval), path("${output_rtc_intervals}"), val(sample_ids), emit: ir_targets
 
     script:
     arg_bam = bam.collect{ "--input_file '${it}'" }.join(' ')
@@ -107,25 +107,16 @@ process run_IndelRealigner_GATK {
     path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
-    tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), path(target_intervals_RTC), val(sample_id)
+    tuple path(bams), path(bam_indices), val(interval_id), path(scatter_intervals), path(target_intervals_RTC), val(sample_ids)
 
     output:
-    tuple path("${output_filename}.bam"), path("${output_filename}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), val(sample_id), emit: output_ch_indel_realignment
+    tuple val(sample_ids), path("*.indelrealigned.bam"), path("*.indelrealigned.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), emit: output_ch_indel_realignment
 
     script:
-    arg_bam = bam.collect{ "--input_file '$it'" }.join(' ')
+    arg_bam = bams.collect{ "--input_file '$it'" }.join(' ')
     has_unmapped = (interval_id == 'nonassembled' || interval_id == '0000')
     unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
-    output_filename = generate_standard_filename(
-        params.aligner,
-        params.dataset_id,
-        sample_id,
-        [
-            'additional_information': "indelrealigned_${interval_id}",
-            'additional_tools': ["GATK-${params.gatk3_version.split('-')[1]}"]
-        ]
-    )
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir} \
@@ -138,7 +129,7 @@ process run_IndelRealigner_GATK {
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
-        --out ${output_filename}.bam \
+        --nWayOut .indelrealigned.bam \
         ${combined_interval_options}
     """
 }
@@ -155,7 +146,7 @@ workflow realign_indels {
                 it.indices,
                 it.interval_id,
                 it.interval_path,
-                it.sample_id
+                it.sample_ids  // Pass through sample IDs
             ]
         }
         .set{ input_ch_rtc }
@@ -170,7 +161,7 @@ workflow realign_indels {
         params.bundle_known_indels_vcf_gz_tbi,
         "${params.getOrDefault('intervals', null) ?: params.work_dir + '/NO_FILE.bed'}",
         input_ch_rtc
-        )
+    )
 
     run_IndelRealigner_GATK(
         params.reference_fasta,
@@ -181,17 +172,19 @@ workflow realign_indels {
         params.bundle_known_indels_vcf_gz,
         params.bundle_known_indels_vcf_gz_tbi,
         run_RealignerTargetCreator_GATK.out.ir_targets
-        )
+    )
 
+    // Transform output to maintain per-sample identity and metadata
     run_IndelRealigner_GATK.out.output_ch_indel_realignment
-        .map{
+        .transpose() // Split sample_ids and BAMs into pairs
+        .map{ sample_ids, bams, bais, interval_id, interval, has_unmapped ->
             [
-                'bam': it[0],
-                'bam_index': it[1],
-                'interval_id': it[2],
-                'interval': it[3],
-                'has_unmapped': it[4],
-                'sample_id': it[5]
+                'sample_id': sample_ids,
+                'bam': bams,
+                'bam_index': bais,
+                'interval_id': interval_id,
+                'interval': interval,
+                'has_unmapped': has_unmapped
             ]
         }
         .set{ output_ch_realign_indels }

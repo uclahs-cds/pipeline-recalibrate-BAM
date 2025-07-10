@@ -150,16 +150,33 @@ workflow {
     *   Conditional workflow processing
     */
 
-    // Prepare input for processing with individual sample information preserved
+    // ------------------------------------------------------------------
+    // For indel realignment we want ALL BAMs processed together (best
+    // practice for GATK IndelRealigner) but still operate by interval.
+    // We collect all samples into lists and then combine with intervals.
     validated_samples_with_index
+        .collect()
         .combine(input_ch_intervals)
-        .map{ sample, interval ->
+        .map { combined ->
+            // The last element is always the interval map produced by `input_ch_intervals`
+            def interval = combined[-1]
+
+            // Everything before the last element represents the sample information.  Depending on
+            // the timing of the upstream `collect()` this can be either:
+            //   1) A single list that already contains all sample maps, or
+            //   2) One entry per sample (each a map).  Detect the first case and unwrap it so that
+            //      `samplesList` is always a flat list of sample maps.
+            def sampleSection  = combined[0..-2]
+            def samplesList    = (sampleSection.size() == 1 && sampleSection[0] instanceof List)
+                                   ? sampleSection[0]
+                                   : sampleSection
+
             [
-                'bams': [sample.path],          // Keep as list for compatibility but preserve individual samples
-                'indices': [sample.index],      // Keep as list for compatibility but preserve individual samples
-                'interval_id': interval.interval_id,
+                'bams'         : samplesList.collect { it.path },
+                'indices'      : samplesList.collect { it.index },
+                'interval_id'  : interval.interval_id,
                 'interval_path': interval.interval_path,
-                'sample_id': sample.id          // Preserve individual sample ID
+                'sample_ids'   : samplesList.collect { it.id }
             ]
         }
         .set{ input_ch_processing }
@@ -180,7 +197,9 @@ workflow {
     if (params.run_indel_realignment) {
         realign_indels(input_ch_processing)
 
+        // The output is already in the correct format for base recalibration
         processed_samples = realign_indels.out.output_ch_realign_indels
+
         completion_signal = realign_indels.out.output_ch_realign_indels
             .map{ it.has_unmapped }
             .collect()
@@ -190,12 +209,12 @@ workflow {
             .combine(input_ch_intervals)
             .map{ sample, interval ->
                 [
+                    'sample_id': sample.id,
                     'bam': sample.path,
                     'bam_index': sample.index,
                     'interval_id': interval.interval_id,
                     'interval': interval.interval_path,
-                    'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000'),
-                    'sample_id': sample.id  // Include the actual sample ID
+                    'has_unmapped': (interval.interval_id == 'nonassembled' || interval.interval_id == '0000')
                 ]
             }
             .set{ processed_samples }
@@ -206,31 +225,27 @@ workflow {
 
     // Step 2: Conditionally run base recalibration
     if (params.run_base_recalibration) {
-        // Prepare sample ID mapping for base recalibration only mode
-        if (params.run_indel_realignment) {
-            // For indel realignment + base recalibration, no mapping needed
-            recalibrate_base(processed_samples)
-        } else {
-            // For base recalibration only mode, sample IDs are already included
-            recalibrate_base(processed_samples)
-        }
+        // No need for sample_ids_ch anymore since we maintain per-sample identity throughout
+        recalibrate_base(processed_samples)
 
         samples_for_merge = recalibrate_base.out.recalibrated_samples
         processing_completion_signal = recalibrate_base.out.recalibrated_samples
-            .map{ it.sample }
+            .map { it.sample }
             .collect()
-    } else {
-        // Transform indel realignment output to merge format
-        realign_indels.out.output_ch_realign_indels
+    } else if (params.run_indel_realignment) {
+        // Only running indel realignment, use its output directly
+        processed_samples
             .map{
                 [
-                    'sample': it.sample_id,     // Use preserved sample_id instead of extracting
+                    'sample': it.sample_id,
                     'bam': it.bam
                 ]
             }
             .set{ samples_for_merge }
 
         processing_completion_signal = completion_signal
+    } else {
+        error "Error: At least one of run_indel_realignment or run_base_recalibration must be true"
     }
 
     // Step 3: Input deletion after processing completion
