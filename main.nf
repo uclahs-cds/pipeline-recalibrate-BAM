@@ -209,8 +209,10 @@ workflow {
             output_ch_ir
         )
 
+        output_ch_bqsr = recalibrate_base.out.recalibrated_samples
     } else {
-        // Reformat channels to match expected output of BQSR
+        // Pass through IR output channel since formats now match
+        output_ch_bqsr = output_ch_ir
     }
 
 
