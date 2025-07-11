@@ -26,6 +26,16 @@ is_emit_original_quals:
   required: true
   default: true
   help: 'Whether to emit original quality scores after recalibration'
+run_bqsr:
+  type: 'Bool'
+  required: true
+  default: true
+  help: 'Whether to run BQSR'
+run_indelrealignment:
+  type: 'Bool'
+  required: true
+  default: true
+  help: 'Whether to run IndelRealignment'
 is_DOC_run:
   type: 'Bool'
   required: true
