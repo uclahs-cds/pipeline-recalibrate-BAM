@@ -235,6 +235,8 @@
           }
         }
       },
+      "run_bqsr": true,
+      "run_indelrealignment": true,
       "samples_to_process": [
         {
           "id": "4915723",
