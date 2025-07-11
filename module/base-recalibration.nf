@@ -22,8 +22,8 @@ include {
         bundle_v0_dbsnp138_vcf_gz: path to dbSNP variants
         bundle_v0_dbsnp138_vcf_gz_tbi: path to index of dbSNP variants
         all_intervals: list or tuple of paths to all split intervals
-        indelrealigned_bams: list or tuple of paths to indel realigned BAMs
-        indelrealigned_bams_bai: list or tuple of paths to indel realigned BAM indices
+        input_bams: list or tuple of paths to input  BAMs
+        input_bams_bai: list or tuple of paths to input BAM indices
         sample_id: identifier for the sample
         
     params:
@@ -54,13 +54,13 @@ process run_BaseRecalibrator_GATK {
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
     path(intervals)
     path(recal_tables)
-    tuple path(indelrealigned_bams), path(indelrealigned_bams_bai), val(sample_id)
+    tuple path(input_bams), path(input_bams_bai), val(sample_id)
 
     output:
     tuple val(sample_id), path("${sample_id}_recalibration_table.grp"), emit: recalibration_table
 
     script:
-    all_ir_bams = indelrealigned_bams.collect{ "--input '${it}'" }.join(' ')
+    all_input_bams = input_bams.collect{ "--input '${it}'" }.join(' ')
     targeted_options = params.is_targeted ? "--intervals \"\$(realpath ${intervals})\" --interval-padding 100" : ""
     """
     set -euo pipefail
@@ -68,7 +68,7 @@ process run_BaseRecalibrator_GATK {
     then
         gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
             BaseRecalibrator \
-            ${all_ir_bams} \
+            ${all_input_bams} \
             --reference ${reference_fasta} \
             --verbosity INFO \
             --known-sites ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
@@ -158,22 +158,19 @@ process run_ApplyBQSR_GATK {
 
 workflow recalibrate_base {
     take:
-    ir_samples
-    sample_ids
+    input_samples
 
     main:
-    ir_samples
-        .reduce( ['bams': [], 'indices': []] ){ a, b ->
-            a.bams.add(b.bam);
-            a.indices.add(b.bam_index);
-            return a
+    input_samples
+        .map{ ir_sample ->
+            [it_sample.id, ir_sample.bam, it_sample.bam_index]
         }
-        .combine(sample_ids)
-        .map{ it ->
+        .groupTuple(by: 0)
+        .map{ ir_grouped ->
             [
-                it[0].bams,
-                it[0].indices,
-                it[1]
+                it[1].unique{ bam_path -> file(bam_path).getFileName() },
+                it[2].unique{ bam_index -> file(bam_index).getFileName() },
+                it[0]
             ]
         }
         .set{ input_ch_base_recalibrator }
@@ -203,7 +200,7 @@ workflow recalibrate_base {
         }
         .set{ all_recal_tables }
 
-    ir_samples
+    input_samples
         .combine(all_recal_tables)
         .map{ it ->
             [
