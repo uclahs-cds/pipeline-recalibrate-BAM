@@ -132,6 +132,10 @@ workflow {
                 'interval_path': interval_path
             ]
         }
+        .map{ interval_data ->
+            interval_data['has_unmapped'] = (interval_data.interval_id == 'nonassembled' || interval_data.interval_id == '0000');
+            return interval_data;
+        }
         .set{ input_ch_intervals }
 
 
