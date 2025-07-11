@@ -136,7 +136,7 @@ process run_ApplyBQSR_GATK {
     output_filename = generate_standard_filename(
         params.aligner,
         params.dataset_id,
-        it,
+        sample_id,
         [
             'additional_tools': ["GATK-${params.gatk_version}"],
             'additional_information': "recalibrated-${interval_id}.bam"
