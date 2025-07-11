@@ -245,9 +245,9 @@ workflow recalibrate_base {
                 'id': bqsred_sample[0],
                 'bam': bqsred_sample[1],
                 'bam_index': "/scratch/NO_INDEX.bai",
-                'interval_id': bqsred_sample[3],
-                'interval_path': bqsred_sample[4],
-                'has_unmapped': bqsred_sample[5]
+                'interval_id': bqsred_sample[2],
+                'interval_path': bqsred_sample[3],
+                'has_unmapped': bqsred_sample[4]
             ]
         }
         .set{ output_ch_base_recalibration }
