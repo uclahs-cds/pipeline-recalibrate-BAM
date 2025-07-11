@@ -127,7 +127,7 @@ process run_ApplyBQSR_GATK {
           path(recalibration_table)
 
     output:
-    tuple val(sample_id), path(output_filename), path("${output_filename}.bai"), val(interval_id), val(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
+    tuple val(sample_id), path(output_filename), val(interval_id), val(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
     tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
 
     script:
@@ -168,14 +168,14 @@ workflow recalibrate_base {
     main:
     input_samples
         .map{ ir_sample ->
-            [it_sample.id, ir_sample.bam, it_sample.bam_index]
+            [ir_sample.id, ir_sample.bam, ir_sample.bam_index]
         }
         .groupTuple(by: 0)
         .map{ ir_grouped ->
             [
-                it[1].unique{ bam_path -> file(bam_path).getFileName() },
-                it[2].unique{ bam_index -> file(bam_index).getFileName() },
-                it[0]
+                ir_grouped[1].unique{ bam_path -> file(bam_path).getFileName() },
+                ir_grouped[2].unique{ bam_index -> file(bam_index).getFileName() },
+                ir_grouped[0]
             ]
         }
         .set{ input_ch_base_recalibrator }
@@ -216,7 +216,7 @@ workflow recalibrate_base {
         .set{ ided_input_samples }
 
     ided_recal_tables
-        .join(ided_input_samples)
+        .combine(ided_input_samples, by: 0)
         .map{ joined_input ->
             [
                 joined_input[2].bam,
@@ -244,7 +244,7 @@ workflow recalibrate_base {
             [
                 'id': bqsred_sample[0],
                 'bam': bqsred_sample[1],
-                'bam_index': bqsred_sample[2],
+                'bam_index': "/scratch/NO_INDEX.bai",
                 'interval_id': bqsred_sample[3],
                 'interval_path': bqsred_sample[4],
                 'has_unmapped': bqsred_sample[5]
