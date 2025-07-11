@@ -8,11 +8,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Unreleased
 
+## Added
+
+- Options for selecting combination of BQSR and IndelRealignment
+
 ### Changed
 
 - Update to branch of `pipeline-Nextflow-config`
 - Replace node-specific configs with computed `resources.json` file
 - Use `resource_handler.handle_resources()`
+- Output per-sample BAMs from IndelRealignment using `--nWayOut`
+- Run `ApplyBQSR` per-sample rather than per-interval
 
 ## [1.0.2] - 2024-10-08
 
