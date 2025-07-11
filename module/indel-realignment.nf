@@ -110,21 +110,13 @@ process run_IndelRealigner_GATK {
     tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), val(has_unmapped), path(target_intervals_RTC)
 
     output:
-    tuple path("${output_filename}.bam"), path("${output_filename}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), emit: output_ch_indel_realignment
+    tuple path("*${output_extension}.bam"), path("*${output_extension}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), val(output_extension), emit: output_ch_indel_realignment
 
     script:
     arg_bam = bam.collect{ "--input_file '$it'" }.join(' ')
     unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
-    output_filename = generate_standard_filename(
-        params.aligner,
-        params.dataset_id,
-        params.patient_id,
-        [
-            'additional_information': "indelrealigned_${interval_id}",
-            'additional_tools': ["GATK-${params.gatk3_version.split('-')[1]}"]
-        ]
-    )
+    output_extension = "indelrealigned-${interval_id}"
     """
     set -euo pipefail
     java -Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir} \
@@ -137,7 +129,7 @@ process run_IndelRealigner_GATK {
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
-        --out ${output_filename}.bam \
+        --nWayOut ${output_extension}.bam
         ${combined_interval_options}
     """
 }
@@ -182,15 +174,28 @@ workflow realign_indels {
         run_RealignerTargetCreator_GATK.out.ir_targets
         )
 
+    def basename_map = [:]
+    params.samples_to_process.each { sample_data ->
+        basename_map["${file(sample_data.path).baseName}"] = sample_data.id
+    }
+
     run_IndelRealigner_GATK.out.output_ch_indel_realignment
-        .map{
-            [
-                'bam': it[0],
-                'bam_index': it[1],
-                'interval_id': it[2],
-                'interval_path': it[3],
-                'has_unmapped': it[4]
-            ]
+        .flatMap{
+            def flattened_out = []
+            ((it[0] in List) ? it[0] : [it[0]]).eachWithIndex{ elem, index ->
+                flattened_out.add(
+                    [
+                        'bam': elem,
+                        'bam_index': (it[1] in List) ? it[1][index] : it[1],
+                        'interval_id': it[2],
+                        'interval_path': it[3],
+                        'has_unmapped': it[4],
+                        'id': basename_map[file(elem).baseName.replace(it[5], "")]
+                    ]
+                )
+            }
+
+            return flattened_out;
         }
         .set{ output_ch_realign_indels }
 
