@@ -113,7 +113,7 @@ process run_IndelRealigner_GATK {
     tuple path("*${output_extension}.bam"), path("*${output_extension}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), val(output_extension), emit: output_ch_indel_realignment
 
     script:
-    arg_bam = bam.collect{ "--input_file '$it'" }.join(' ')
+    arg_bam = bam.sort().collect{ "--input_file '$it'" }.join(' ')
     unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     output_extension = "indelrealigned-${interval_id}"
