@@ -39,10 +39,10 @@ process run_RealignerTargetCreator_GATK {
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
     path(original_intervals)
-    tuple path(bam), path(bam_index), val(interval_id), path(interval)
+    tuple path(bam), path(bam_index), val(interval_id), path(interval), val(has_unmapped)
 
     output:
-    tuple path(bam), path(bam_index), val(interval_id), path(interval), path("${output_rtc_intervals}"), emit: ir_targets
+    tuple path(bam), path(bam_index), val(interval_id), path(interval), val(has_unmapped), path("${output_rtc_intervals}"), emit: ir_targets
 
     script:
     arg_bam = bam.collect{ "--input_file '${it}'" }.join(' ')
@@ -107,14 +107,13 @@ process run_IndelRealigner_GATK {
     path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
-    tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), path(target_intervals_RTC)
+    tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), val(has_unmapped), path(target_intervals_RTC)
 
     output:
     tuple path("${output_filename}.bam"), path("${output_filename}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), emit: output_ch_indel_realignment
 
     script:
     arg_bam = bam.collect{ "--input_file '$it'" }.join(' ')
-    has_unmapped = (interval_id == 'nonassembled' || interval_id == '0000')
     unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
     output_filename = generate_standard_filename(
@@ -154,7 +153,8 @@ workflow realign_indels {
                 it.bams,
                 it.indices,
                 it.interval_id,
-                it.interval_path
+                it.interval_path,
+                it.has_unmapped
             ]
         }
         .set{ input_ch_rtc }
@@ -188,7 +188,7 @@ workflow realign_indels {
                 'bam': it[0],
                 'bam_index': it[1],
                 'interval_id': it[2],
-                'interval': it[3],
+                'interval_path': it[3],
                 'has_unmapped': it[4]
             ]
         }
