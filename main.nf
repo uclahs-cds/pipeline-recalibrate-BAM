@@ -163,10 +163,6 @@ workflow {
         output_ch_ir = realign_indels.out.output_ch_realign_indels
 
         realign_indels.out.output_ch_realign_indels
-            .combine(input_ch_sample_ids)
-            .map{ ir_combined ->
-                ir_combined[0] + ['id': ir_combined[1]]
-            }
             .set{ output_ch_ir }
 
         /**
