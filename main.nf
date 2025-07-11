@@ -219,7 +219,7 @@ workflow {
     /**
     *   Merge BAMs
     */
-    merge_bams(recalibrate_base.out.recalibrated_samples)
+    merge_bams(output_ch_bqsr)
 
 
     /**
