@@ -129,7 +129,7 @@ process run_IndelRealigner_GATK {
         --knownAlleles ${bundle_known_indels_vcf_gz} \
         --allow_potentially_misencoded_quality_scores \
         --targetIntervals ${target_intervals_RTC} \
-        --nWayOut ${output_extension}.bam
+        --nWayOut ${output_extension}.bam \
         ${combined_interval_options}
     """
 }
