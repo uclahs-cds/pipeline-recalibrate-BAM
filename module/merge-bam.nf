@@ -170,7 +170,7 @@ workflow merge_bams {
 
     main:
     bams_to_merge
-        .map{ [it.sample, it.bam] }
+        .map{ [it.id, it.bam] }
         .groupTuple()
         .set{ input_ch_merge }
 

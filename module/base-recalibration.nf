@@ -8,6 +8,7 @@ include {
             log_output_dir: "${params.log_output_dir}/process-log"
             ]
         )
+include { delete_input } from './delete-input.nf'
 /*
     Nextflow module for generating base recalibration table
 
@@ -22,8 +23,8 @@ include {
         bundle_v0_dbsnp138_vcf_gz: path to dbSNP variants
         bundle_v0_dbsnp138_vcf_gz_tbi: path to index of dbSNP variants
         all_intervals: list or tuple of paths to all split intervals
-        indelrealigned_bams: list or tuple of paths to indel realigned BAMs
-        indelrealigned_bams_bai: list or tuple of paths to indel realigned BAM indices
+        input_bams: list or tuple of paths to input  BAMs
+        input_bams_bai: list or tuple of paths to input BAM indices
         sample_id: identifier for the sample
         
     params:
@@ -54,13 +55,13 @@ process run_BaseRecalibrator_GATK {
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
     path(intervals)
     path(recal_tables)
-    tuple path(indelrealigned_bams), path(indelrealigned_bams_bai), val(sample_id)
+    tuple path(input_bams), path(input_bams_bai), val(sample_id)
 
     output:
     tuple val(sample_id), path("${sample_id}_recalibration_table.grp"), emit: recalibration_table
 
     script:
-    all_ir_bams = indelrealigned_bams.collect{ "--input '${it}'" }.join(' ')
+    all_input_bams = input_bams.collect{ "--input '${it}'" }.join(' ')
     targeted_options = params.is_targeted ? "--intervals \"\$(realpath ${intervals})\" --interval-padding 100" : ""
     """
     set -euo pipefail
@@ -68,7 +69,7 @@ process run_BaseRecalibrator_GATK {
     then
         gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
             BaseRecalibrator \
-            ${all_ir_bams} \
+            ${all_input_bams} \
             --reference ${reference_fasta} \
             --verbosity INFO \
             --known-sites ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
@@ -89,8 +90,8 @@ process run_BaseRecalibrator_GATK {
         reference_fasta: path to reference genome fasta file
         reference_fasta_fai: path to index for reference fasta
         reference_fasta_dict: path to dictionary for reference fasta
-        indelrealigned_bam: list or tuple of paths to indel realigned BAMs
-        indelrealigned_bam_index: list or tuple of paths to indel realigned BAM indices
+        input_bam: path to input BAM
+        input_bam_index: path to input BAM index
         interval: path to specific intervals file associated with input BAM
         includes_unmapped: boolean to indicate if unmapped reads are included in input BAM
         sample_id: Identifier for sample being processed
@@ -111,14 +112,14 @@ process run_ApplyBQSR_GATK {
       enabled: params.save_intermediate_files,
       pattern: "*_recalibrated-*"
 
-    ext log_dir_suffix: { "-${interval_id}" }
+    ext log_dir_suffix: { "-${sample_id}-${interval_id}" }
 
     input:
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    tuple path(indelrealigned_bam),
-          path(indelrealigned_bam_index),
+    tuple path(input_bam),
+          path(input_bam_index),
           val(interval_id),
           path(interval),
           val(includes_unmapped),
@@ -126,54 +127,55 @@ process run_ApplyBQSR_GATK {
           path(recalibration_table)
 
     output:
-    path("*_recalibrated-*"), emit: output_ch_apply_bqsr
-    tuple path(indelrealigned_bam), path(indelrealigned_bam_index), emit: output_ch_deletion
+    tuple val(sample_id), path(output_filename), val(interval_id), val(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
+    tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
 
     script:
     unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
     combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
-    all_commands = sample_id.collect{
-        """
-        gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \\
-            ApplyBQSR \\
-            --input ${indelrealigned_bam} \\
-            --bqsr-recal-file ${it}_recalibration_table.grp \\
-            --reference ${reference_fasta} \\
-            --read-filter SampleReadFilter \\
-            ${combined_interval_options} \\
-            --emit-original-quals ${params.is_emit_original_quals} \\
-            --output /dev/stdout \\
-            --sample ${it} 2> .command.err | \\
-            samtools view -h | \\
-            awk '(/^@RG/ && /SM:${it}/) || ! /^@RG/' | \\
-            samtools view -b -o ${generate_standard_filename(params.aligner, params.dataset_id, it, ['additional_tools': ["GATK-${params.gatk_version}"]])}_recalibrated-${interval_id}.bam
-        """
-        }
-        .join("\n")
+    output_filename = generate_standard_filename(
+        params.aligner,
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_tools': ["GATK-${params.gatk_version}"],
+            'additional_information': "recalibrated-${interval_id}.bam"
+        ]
+    )
     """
     set -euo pipefail
-    ${all_commands}
+
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+        ApplyBQSR \
+        --input ${input_bam} \
+        --bqsr-recal-file ${recalibration_table} \
+        --reference ${reference_fasta} \
+        --read-filter SampleReadFilter \
+        ${combined_interval_options} \
+        --emit-original-quals ${params.is_emit_original_quals} \
+        --output /dev/stdout \
+        --sample ${sample_id} 2> .command.err | \
+        samtools view -h | \
+        awk '(/^@RG/ && /SM:${sample_id}/) || ! /^@RG/' | \
+        samtools view -b -o ${output_filename}
     """
 }
 
 workflow recalibrate_base {
     take:
-    ir_samples
-    sample_ids
+    input_samples
 
     main:
-    ir_samples
-        .reduce( ['bams': [], 'indices': []] ){ a, b ->
-            a.bams.add(b.bam);
-            a.indices.add(b.bam_index);
-            return a
+    input_samples
+        .map{ ir_sample ->
+            [ir_sample.id, ir_sample.bam, ir_sample.bam_index]
         }
-        .combine(sample_ids)
-        .map{ it ->
+        .groupTuple(by: 0)
+        .map{ ir_grouped ->
             [
-                it[0].bams,
-                it[0].indices,
-                it[1]
+                ir_grouped[1].unique{ bam_path -> file(bam_path).getFileName() },
+                ir_grouped[2].unique{ bam_index -> file(bam_index).getFileName() },
+                ir_grouped[0]
             ]
         }
         .set{ input_ch_base_recalibrator }
@@ -196,24 +198,35 @@ workflow recalibrate_base {
     )
 
     run_BaseRecalibrator_GATK.out.recalibration_table
-        .reduce( ['ids': [], 'tables': []] ){ a, b ->
-            a.ids.add(b[0]);
-            a.tables.add(b[1]);
-            return a
-        }
-        .set{ all_recal_tables }
-
-    ir_samples
-        .combine(all_recal_tables)
-        .map{ it ->
+        .map{ recal_table ->
             [
-                it[0].bam,
-                it[0].bam_index,
-                it[0].interval_id,
-                it[0].interval,
-                it[0].has_unmapped,
-                it[1].ids,
-                it[1].tables
+                recal_table[0], // Sample ID
+                ['recal_table': recal_table[1]]
+            ]
+        }
+        .set{ ided_recal_tables }
+
+    input_samples
+        .map{ input_sample ->
+            [
+                input_sample.id,
+                input_sample
+            ]
+        }
+        .set{ ided_input_samples }
+
+    ided_recal_tables
+        .combine(ided_input_samples, by: 0)
+        .map{ joined_input ->
+            [
+                joined_input[2].bam,
+                joined_input[2].bam_index,
+                joined_input[2].interval_id,
+                joined_input[2].interval_path,
+                joined_input[2].has_unmapped,
+                joined_input[2].id,
+                joined_input[1].recal_table
+
             ]
         }
         .set{ input_ch_apply_bqsr }
@@ -225,20 +238,51 @@ workflow recalibrate_base {
         input_ch_apply_bqsr
     )
 
+    // val(sample_id), path(output_filename), path("${output_filename}.bai"), val(interval_id), val(interval), val(includes_unmapped)
     run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
-        .flatten()
-        .map{
+        .map{ bqsred_sample ->
             [
-                'sample': it.baseName.split("_")[3], // sample ID
-                'bam': it
+                'id': bqsred_sample[0],
+                'bam': bqsred_sample[1],
+                'bam_index': "/scratch/NO_INDEX.bai",
+                'interval_id': bqsred_sample[2],
+                'interval_path': bqsred_sample[3],
+                'has_unmapped': bqsred_sample[4]
             ]
         }
         .set{ output_ch_base_recalibration }
 
-    remove_intermediate_files(
-        run_ApplyBQSR_GATK.out.output_ch_deletion.flatten(),
-        "bqsr_complete"
-    )
+    /**
+    *   Handle deletion
+    */
+    if (params.run_indelrealignment) {
+        // Delete input to BQSR as intermediate files
+        remove_intermediate_files(
+            run_ApplyBQSR_GATK.out.output_ch_deletion.flatten(),
+            "bqsr_complete"
+        )
+    } else {
+        // Pipeline inputs directly sent to BQSR, handle deletion based on metapipeline params
+        Channel.from(params.samples_to_process)
+            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
+            .map{ sample -> sample.path }
+            .flatten()
+            .unique()
+            .set{ input_bams_to_delete }
+
+        run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
+            .map{ 'done' }
+            .collect()
+            .map{ 'done' }
+            .set{ bqsr_complete_signal }
+
+        input_bams_to_delete
+            .combine(bqsr_complete_signal)
+            .map{ it[0] }
+            .set{ input_ch_bams_to_delete }
+
+        delete_input(input_ch_bams_to_delete)
+    }
 
     emit:
     recalibrated_samples = output_ch_base_recalibration

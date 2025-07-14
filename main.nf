@@ -132,60 +132,94 @@ workflow {
                 'interval_path': interval_path
             ]
         }
+        .map{ interval_data ->
+            interval_data['has_unmapped'] = (interval_data.interval_id == 'nonassembled' || interval_data.interval_id == '0000');
+            return interval_data;
+        }
         .set{ input_ch_intervals }
 
+
+    validated_samples_with_index
+        .map{ sample -> sample.id }
+        .flatten()
+        .set{ input_ch_sample_ids }
 
     /**
     *   Indel realignment
     */
-    validated_samples_with_index
-        .reduce( ['bams': [], 'indices': []] ){ a, b ->
-            a.bams.add(b.path);
-            a.indices.add(b.index);
-            return a
-        }
-        .combine(input_ch_intervals)
-        .map{ it -> it[0] + it[1] }
-        .set{ input_ch_indel_realignment }
+    if (params.run_indelrealignment) {
+        validated_samples_with_index
+            .reduce( ['bams': [], 'indices': []] ){ a, b ->
+                a.bams.add(b.path);
+                a.indices.add(b.index);
+                return a
+            }
+            .combine(input_ch_intervals)
+            .map{ it -> it[0] + it[1] }
+            .set{ input_ch_indel_realignment }
 
-    realign_indels(input_ch_indel_realignment)
+        realign_indels(input_ch_indel_realignment)
 
-    /**
-    *   Input file deletion
-    */
-    validated_samples_with_index
-        .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
-        .map{ sample -> sample.path }
-        .flatten()
-        .unique()
-        .set{ input_bams }
+        output_ch_ir = realign_indels.out.output_ch_realign_indels
 
-    realign_indels.out.output_ch_realign_indels
-        .map{ it.has_unmapped }
-        .collect()
-        .set{ ir_complete_signal }
+        realign_indels.out.output_ch_realign_indels
+            .set{ output_ch_ir }
 
-    input_bams
-        .combine(ir_complete_signal)
-        .map{ it[0] }
-        .set{ input_ch_bams_to_delete }
+        /**
+        *   Input file deletion
+        */
+        validated_samples_with_index
+            .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
+            .map{ sample -> sample.path }
+            .flatten()
+            .unique()
+            .set{ input_bams }
 
-    delete_input(input_ch_bams_to_delete)
+        realign_indels.out.output_ch_realign_indels
+            .map{ it.has_unmapped }
+            .collect()
+            .set{ ir_complete_signal }
 
+        input_bams
+            .combine(ir_complete_signal)
+            .map{ it[0] }
+            .set{ input_ch_bams_to_delete }
+
+        delete_input(input_ch_bams_to_delete)
+    } else {
+        // Reformat channels to match expected output of IndelRealignment
+        validated_samples_with_index
+            .map{ raw_samples ->
+                [
+                    'bam': [raw_samples.path],
+                    'bam_index': [raw_samples.index],
+                    'id': raw_samples.id
+                ]
+            }
+            .combine(input_ch_intervals)
+            .map{ it -> it[0] + it[1] }
+            .set{ output_ch_ir }
+    }
 
     /**
     *   Base recalibration
     */
-    recalibrate_base(
-        realign_indels.out.output_ch_realign_indels,
-        validated_samples_with_index.map{ sample -> sample.id }.flatten()
-    )
+    if (params.run_bqsr) {
+        recalibrate_base(
+            output_ch_ir
+        )
+
+        output_ch_bqsr = recalibrate_base.out.recalibrated_samples
+    } else {
+        // Pass through IR output channel since formats now match
+        output_ch_bqsr = output_ch_ir
+    }
 
 
     /**
     *   Merge BAMs
     */
-    merge_bams(recalibrate_base.out.recalibrated_samples)
+    merge_bams(output_ch_bqsr)
 
 
     /**
