@@ -37,11 +37,12 @@ include { delete_input } from './delete-input.nf'
 */
 process run_BaseRecalibrator_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
+      enabled: params.save_intermediate_files,
       pattern: "*.grp"
 
-    ext log_dir_suffix: { "-${sample_id}" }
+    ext log_dir_suffix: { "-${sample_id}-${interval_id}" }
 
     input:
     path(reference_fasta)
@@ -54,32 +55,69 @@ process run_BaseRecalibrator_GATK {
     path(bundle_v0_dbsnp138_vcf_gz)
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
     path(intervals)
-    path(recal_tables)
-    tuple path(input_bams), path(input_bams_bai), val(sample_id)
+    tuple val(sample_id), path(input_bam), path(input_bam_bai), val(interval_id), path(interval_path), val(has_unmapped)
 
     output:
-    tuple val(sample_id), path("${sample_id}_recalibration_table.grp"), emit: recalibration_table
+    tuple val(sample_id), path("${sample_id}_${interval_id}_recalibration_table.grp"), emit: recalibration_table
 
     script:
-    all_input_bams = input_bams.collect{ "--input '${it}'" }.join(' ')
-    targeted_options = params.is_targeted ? "--intervals \"\$(realpath ${intervals})\" --interval-padding 100" : ""
+    base_interval_option = "--intervals ${interval_path}"
+    unmapped_interval_option = has_unmapped ? "--intervals unmapped" : ""
+    interval_padding = params.is_targeted ? "--interval_padding 100" : ""
+    combined_interval_options = params.is_targeted ?
+        "--intervals \"\$(realpath ${intervals})\" ${interval_padding} --interval-set-rule INTERSECTION" :
+        "${unmapped_interval_option} --interval-set-rule UNION"
     """
     set -euo pipefail
-    if [ ! -f ${sample_id}_recalibration_table.grp ]
-    then
-        gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
-            BaseRecalibrator \
-            ${all_input_bams} \
-            --reference ${reference_fasta} \
-            --verbosity INFO \
-            --known-sites ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
-            --known-sites ${bundle_known_indels_vcf_gz} \
-            --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
-            --output ${sample_id}_recalibration_table.grp \
-            ${targeted_options} \
-            --read-filter SampleReadFilter \
-            --sample ${sample_id}
-    fi
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+        BaseRecalibrator \
+        --input ${input_bam} \
+        --reference ${reference_fasta} \
+        --verbosity INFO \
+        --known-sites ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
+        --known-sites ${bundle_known_indels_vcf_gz} \
+        --known-sites ${bundle_v0_dbsnp138_vcf_gz} \
+        --output ${sample_id}_${interval_id}_recalibration_table.grp \
+        --read-filter SampleReadFilter \
+        --sample ${sample_id} \
+        ${base_interval_option} \
+        ${combined_interval_options} || touch ${sample_id}_${interval_id}_recalibration_table.grp
+    """
+}
+
+/*
+    Nextflow module for gathering BQSR reports from multiple intervals into a single report per sample
+    input:
+        sample_id: identifier for the sample
+        recalibration_tables: list of paths to interval-specific recalibration tables for this sample
+    params:
+        params.output_dir_base: string(path)
+        params.log_output_dir: string(path)
+        params.docker_image_gatk: string
+        params.gatk_command_mem_diff: float(memory)
+*/
+process run_GatherBQSRReports_GATK {
+    container params.docker_image_gatk
+    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
+      mode: "copy",
+      pattern: "*.grp"
+
+    ext log_dir_suffix: { "-${sample_id}" }
+
+    input:
+    tuple val(sample_id), path(recalibration_tables)
+
+    output:
+    tuple val(sample_id), path("${sample_id}_recalibration_table.grp"), emit: gathered_recalibration_table
+
+    script:
+    input_args = recalibration_tables.collect{ "--input ${it}" }.join(' ')
+    """
+    set -euo pipefail
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+        GatherBQSRReports \
+        ${input_args} \
+        --output ${sample_id}_recalibration_table.grp
     """
 }
 
@@ -166,16 +204,24 @@ workflow recalibrate_base {
     input_samples
 
     main:
+    /**
+    *   BaseRecalibrator
+    */
+    def given_recal_tables = [:]
+    params.input.recalibration_table.each { recal_table ->
+        given_recal_tables["${file(recal_table).baseName.replace('_recalibration_table.grp', '')}"] = recal_table
+    }
+
     input_samples
+        .filter{ s -> (!given_recal_tables.containsKey(s.id)) }
         .map{ ir_sample ->
-            [ir_sample.id, ir_sample.bam, ir_sample.bam_index]
-        }
-        .groupTuple(by: 0)
-        .map{ ir_grouped ->
             [
-                ir_grouped[1].unique{ bam_path -> file(bam_path).getFileName() },
-                ir_grouped[2].unique{ bam_index -> file(bam_index).getFileName() },
-                ir_grouped[0]
+                ir_sample.id,
+                ir_sample.bam,
+                ir_sample.bam_index,
+                ir_sample.interval_id,
+                ir_sample.interval_path,
+                ir_sample.has_unmapped
             ]
         }
         .set{ input_ch_base_recalibrator }
@@ -193,17 +239,39 @@ workflow recalibrate_base {
         params.bundle_v0_dbsnp138_vcf_gz,
         params.bundle_v0_dbsnp138_vcf_gz_tbi,
         base_recalibrator_intervals,
-        params.input.recalibration_table,
         input_ch_base_recalibrator
     )
 
+    /**
+    *   GatherBQSRReports
+    */
     run_BaseRecalibrator_GATK.out.recalibration_table
+        .filter{ recal_table ->
+            def f = new File(recal_table[1].toString());
+            f.length() != 0 // Filter out empty files caused by disjoint intervals
+        }
         .map{ recal_table ->
             [
                 recal_table[0], // Sample ID
-                ['recal_table': recal_table[1]]
+                recal_table[1]
             ]
         }
+        .groupTuple(by: 0)
+        .set{ input_ch_gatherbqsr }
+
+    run_GatherBQSRReports_GATK(input_ch_gatherbqsr)
+
+
+    /**
+    *   ApplyBQSR
+    */
+    def recal_tables = []
+    given_recal_tables.each{ s, t ->
+        recal_tables << [s, t]
+    }
+
+    run_GatherBQSRReports_GATK.out.gathered_recalibration_table
+        .mix(Channel.fromList(recal_tables))
         .set{ ided_recal_tables }
 
     input_samples
