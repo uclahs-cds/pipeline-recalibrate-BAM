@@ -66,6 +66,7 @@ process run_BaseRecalibrator_GATK {
     interval_padding = params.is_targeted ? "--interval_padding 100" : ""
     combined_interval_options = params.is_targeted ?
         "--intervals \"\$(realpath ${intervals})\" ${interval_padding} --interval-set-rule INTERSECTION" :
+        ""
         "${unmapped_interval_option} --interval-set-rule UNION"
     """
     set -euo pipefail
@@ -272,6 +273,12 @@ workflow recalibrate_base {
 
     run_GatherBQSRReports_GATK.out.gathered_recalibration_table
         .mix(Channel.fromList(recal_tables))
+        .map{ tables ->
+            [
+                tables[0],
+                ['recal_table': tables[1]]
+            ]
+        }
         .set{ ided_recal_tables }
 
     input_samples
@@ -294,7 +301,6 @@ workflow recalibrate_base {
                 joined_input[2].has_unmapped,
                 joined_input[2].id,
                 joined_input[1].recal_table
-
             ]
         }
         .set{ input_ch_apply_bqsr }
