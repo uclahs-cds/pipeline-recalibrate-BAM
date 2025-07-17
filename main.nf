@@ -101,16 +101,12 @@ workflow {
             storeDir: "${params.output_dir_base}/validation"
         )
 
-    run_validate_PipeVal_with_metadata.out.validated_file
-        .map { filename, metadata -> [metadata[0].id, metadata[0] + [(metadata[1]): filename]] }
-        .groupTuple()
-        .map { it[1].inject([:]) { result, i -> result + i } }
-        .set { validated_samples_with_index }
-
-    // The elements of validated_samples_with_index are the same as
-    // params.samples_to_process, with the following changes:
-    // * sample.path is the validated BAM file
-    // * sample.index is the validated BAI file (new key)
+    Channel.from(params.samples_to_process)
+        .map { sample ->
+            sample["index"] = indexFile(sample.path)
+            return sample
+        }
+        .set{ samples_with_index }
 
     /**
     *   Interval extraction and splitting
@@ -143,7 +139,7 @@ workflow {
     *   Indel realignment
     */
     if (params.run_indelrealignment) {
-        validated_samples_with_index
+        samples_with_index
             .reduce( ['bams': [], 'indices': []] ){ a, b ->
                 a.bams.add(b.path);
                 a.indices.add(b.index);
@@ -163,7 +159,7 @@ workflow {
         /**
         *   Input file deletion
         */
-        validated_samples_with_index
+        samples_with_index
             .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
             .map{ sample -> sample.path }
             .flatten()
@@ -183,7 +179,7 @@ workflow {
         delete_input(input_ch_bams_to_delete)
     } else {
         // Reformat channels to match expected output of IndelRealignment
-        validated_samples_with_index
+        samples_with_index
             .map{ raw_samples ->
                 [
                     'bam': [raw_samples.path],
@@ -242,13 +238,13 @@ workflow {
         input_ch_merged_bams
     )
 
-    validated_samples_with_index
+    samples_with_index
         .filter{ it.sample_type == 'normal' }
         .map{ it -> [sanitize_string(it.id)] }
         .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
         .set{ normal_pileupsummaries }
 
-    validated_samples_with_index
+    samples_with_index
         .filter{ it.sample_type == 'tumor' }
         .map{ it -> [sanitize_string(it.id)] }
         .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
