@@ -139,11 +139,6 @@ workflow {
         .set{ input_ch_intervals }
 
 
-    validated_samples_with_index
-        .map{ sample -> sample.id }
-        .flatten()
-        .set{ input_ch_sample_ids }
-
     /**
     *   Indel realignment
     */
