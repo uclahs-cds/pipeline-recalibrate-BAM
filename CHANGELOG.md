@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Added
 
 - Options for selecting combination of BQSR and IndelRealignment
+- Resource allocations for validation process
 
 ### Changed
 
@@ -19,6 +20,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Use `resource_handler.handle_resources()`
 - Output per-sample BAMs from IndelRealignment using `--nWayOut`
 - Run `ApplyBQSR` per-sample and per-interval rather than just per-interval
+- Parallelize `BaseRecalibrator` to run per-sample and per-interval
 
 ## [1.0.2] - 2024-10-08
 

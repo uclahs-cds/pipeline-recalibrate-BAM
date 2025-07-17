@@ -115,6 +115,10 @@
         "run_validate_PipeVal": {
           "cpus": "1",
           "memory": "1 GB"
+        },
+        "run_validate_PipeVal_with_metadata": {
+          "cpus": "1",
+          "memory": "1 GB"
         }
       },
       "blcds_registered_dataset": false,
@@ -449,6 +453,10 @@
         }
       },
       "withName:run_validate_PipeVal": {
+        "cpus": "1",
+        "memory": "1 GB"
+      },
+      "withName:run_validate_PipeVal_with_metadata": {
         "cpus": "1",
         "memory": "1 GB"
       }
