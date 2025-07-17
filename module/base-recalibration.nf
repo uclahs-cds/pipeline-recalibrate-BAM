@@ -63,10 +63,9 @@ process run_BaseRecalibrator_GATK {
     script:
     base_interval_option = "--intervals ${interval_path}"
     unmapped_interval_option = has_unmapped ? "--intervals unmapped" : ""
-    interval_padding = params.is_targeted ? "--interval_padding 100" : ""
+    interval_padding = params.is_targeted ? "--interval-padding 100" : ""
     combined_interval_options = params.is_targeted ?
         "--intervals \"\$(realpath ${intervals})\" ${interval_padding} --interval-set-rule INTERSECTION" :
-        ""
         "${unmapped_interval_option} --interval-set-rule UNION"
     """
     set -euo pipefail
