@@ -67,23 +67,6 @@ process run_RealignerTargetCreator_GATK {
     """
 }
 
-Integer getSortKey(String chr) {
-    String identifier = chr.toUpperCase().replace("CHR", "");
-    if (identifier.isInteger()) {
-        return identifier.toInteger();
-    }
-
-    Map integer_map = [
-        'M': 23,
-        'X': 24,
-        'Y': 25,
-        'NONASSEMBLED': -1
-    ]
-
-    // Return default value of 100 to avoid error
-    return integer_map.getOrDefault(identifier, 100);
-}
-
 /*
     Nextflow module for realigning indels
 
@@ -180,23 +163,6 @@ workflow realign_indels {
         input_ch_rtc
         )
 
-    // Sort intervals to put nonassembled contigs first
-    run_RealignerTargetCreator_GATK.out.ir_targets
-        .map{ ir_target ->
-            [
-                'key': getSortKey(ir_target[2]),
-                'ir_target_data': ir_target
-            ]
-        }
-        .toSortedList{ a, b ->
-            a.key <=> b.key
-        }
-        .flatten()
-        .map{ sorted_data ->
-            sorted_data.ir_target_data
-        }
-        .set{ input_ch_indelrealigner }
-
     run_IndelRealigner_GATK(
         params.reference_fasta,
         params.reference_fasta_fai,
@@ -205,7 +171,7 @@ workflow realign_indels {
         params.bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi,
         params.bundle_known_indels_vcf_gz,
         params.bundle_known_indels_vcf_gz_tbi,
-        input_ch_indelrealigner
+        run_RealignerTargetCreator_GATK.out.ir_targets
         )
 
     def basename_map = [:]
