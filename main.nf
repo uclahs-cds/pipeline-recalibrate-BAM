@@ -87,11 +87,18 @@ workflow {
     *   Input validation
     */
     Channel.from(params.samples_to_process)
-        .flatMap { sample ->
-            def all_metadata = sample.findAll { it.key != "path" }
+        .map { sample ->
+            sample["index"] = indexFile(sample.path)
+            return sample
+        }
+        .set{ samples_with_index }
+
+    samples_with_index
+        .flatMap { full_sample ->
+            def all_metadata = full_sample.findAll { it.key != "path" }
             return [
-                [sample.path, [all_metadata, "path"]],
-                [indexFile(sample.path), [[id: sample.id], "index"]]
+                [full_sample.path, [all_metadata, "path"]],
+                [full_sample.index, [[id: full_sample.id], "index"]]
             ]
         } | run_validate_PipeVal_with_metadata
 
@@ -101,12 +108,6 @@ workflow {
             storeDir: "${params.output_dir_base}/validation"
         )
 
-    Channel.from(params.samples_to_process)
-        .map { sample ->
-            sample["index"] = indexFile(sample.path)
-            return sample
-        }
-        .set{ samples_with_index }
 
     /**
     *   Interval extraction and splitting
