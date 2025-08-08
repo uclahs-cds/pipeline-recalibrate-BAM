@@ -56,27 +56,13 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         output_dir: params.output_dir_base
         ]
     )
+include { indexFile } from './external/pipeline-Nextflow-module/modules/common/indexFile/main.nf'
 include { realign_indels } from './module/indel-realignment.nf'
+include { delete_input } from './module/delete-input.nf'
 include { recalibrate_base } from './module/base-recalibration.nf'
 include { merge_bams } from './module/merge-bam.nf'
-include {
-    run_GetPileupSummaries_GATK
-    run_CalculateContamination_GATK
-    run_DepthOfCoverage_GATK
-} from './module/summary-qc.nf'
-include { delete_input } from './module/delete-input.nf'
-include { sanitize_string } from './external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
-
-// Returns the index file for the given bam or vcf
-def indexFile(bam_or_vcf) {
-    if (bam_or_vcf.endsWith('.bam')) {
-        return "${bam_or_vcf}.bai"
-    } else if (bam_or_vcf.endsWith('vcf.gz')) {
-        return "${bam_or_vcf}.tbi"
-    } else {
-        throw new Exception("Index file for ${bam_or_vcf} file type not supported. Use .bam or .vcf.gz files.")
-    }
-}
+include { summary_qc } from './module/summary-qc.nf'
+include { run_DepthOfCoverage_GATK } from './module/summary-qc.nf'
 
 workflow {
     /**
@@ -87,11 +73,18 @@ workflow {
     *   Input validation
     */
     Channel.from(params.samples_to_process)
-        .flatMap { sample ->
-            def all_metadata = sample.findAll { it.key != "path" }
+        .map { sample ->
+            sample["index"] = indexFile(sample.path)
+            return sample
+        }
+        .set{ samples_with_index }
+
+    samples_with_index
+        .flatMap { full_sample ->
+            def all_metadata = full_sample.findAll { it.key != "path" }
             return [
-                [sample.path, [all_metadata, "path"]],
-                [indexFile(sample.path), [[id: sample.id], "index"]]
+                [full_sample.path, [all_metadata, "path"]],
+                [full_sample.index, [[id: full_sample.id], "index"]]
             ]
         } | run_validate_PipeVal_with_metadata
 
@@ -100,13 +93,6 @@ workflow {
             name: 'input_validation.txt',
             storeDir: "${params.output_dir_base}/validation"
         )
-
-    Channel.from(params.samples_to_process)
-        .map { sample ->
-            sample["index"] = indexFile(sample.path)
-            return sample
-        }
-        .set{ samples_with_index }
 
     /**
     *   Interval extraction and splitting
@@ -125,7 +111,7 @@ workflow {
         .map{ interval_path ->
             [
                 'interval_id': file(interval_path).getName().replace('-contig.interval_list', ''),
-                'interval_path': interval_path
+                'split_interval': interval_path
             ]
         }
         .map{ interval_data ->
@@ -133,7 +119,6 @@ workflow {
             return interval_data;
         }
         .set{ input_ch_intervals }
-
 
     /**
     *   Indel realignment
@@ -150,8 +135,6 @@ workflow {
             .set{ input_ch_indel_realignment }
 
         realign_indels(input_ch_indel_realignment)
-
-        output_ch_ir = realign_indels.out.output_ch_realign_indels
 
         realign_indels.out.output_ch_realign_indels
             .set{ output_ch_ir }
@@ -182,9 +165,9 @@ workflow {
         samples_with_index
             .map{ raw_samples ->
                 [
-                    'bam': [raw_samples.path],
-                    'bam_index': [raw_samples.index],
-                    'id': raw_samples.id
+                    'bam': raw_samples.path,
+                    'bam_index': raw_samples.index,
+                    'sample_id': raw_samples.id
                 ]
             }
             .combine(input_ch_intervals)
@@ -206,81 +189,38 @@ workflow {
         output_ch_bqsr = output_ch_ir
     }
 
+    summary_qc(output_ch_bqsr)
+
+    output_ch_bqsr
+        .map{ [it.sample_id, it.bam, it.interval_id] }
+        .set { bams_for_merge }
 
     /**
     *   Merge BAMs
     */
-    merge_bams(output_ch_bqsr)
-
+    merge_bams(
+        bams_for_merge
+    )
 
     /**
-    *   Summary and QC processes
+    *   Depth of Coverage, rarely used, could be parallelized by chromosome
     */
-    merge_bams.out.output_ch_merge_bams
-        .map{ [it.sample, it.bam, it.bam_index] }
-        .set{ input_ch_merged_bams }
+    if (params.is_DOC_run) {
+        merge_bams.out.output_ch_merge_bams
+            .map{ [it.sample_id, it.bam, it.bam_index] }
+            .set{ input_ch_merged_bams }
 
-    summary_intervals = (params.is_targeted) ?
-        Channel.from(params.intervals).collect() :
-        extract_GenomeIntervals.out.genomic_intervals
+        input_ch_intervals
+            .map{ it.split_interval }
+            .collect()
+            .set{ all_intervals }
 
-    summary_intervals.combine(input_ch_merged_bams)
-        .map{ it[0] }
-        .set{ input_ch_summary_intervals }
-
-    run_GetPileupSummaries_GATK(
-        params.reference_fasta,
-        params.reference_fasta_fai,
-        params.reference_fasta_dict,
-        params.bundle_contest_hapmap_3p3_vcf_gz,
-        params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
-        input_ch_summary_intervals,
-        input_ch_merged_bams
-    )
-
-    samples_with_index
-        .filter{ it.sample_type == 'normal' }
-        .map{ it -> [sanitize_string(it.id)] }
-        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
-        .set{ normal_pileupsummaries }
-
-    samples_with_index
-        .filter{ it.sample_type == 'tumor' }
-        .map{ it -> [sanitize_string(it.id)] }
-        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
-        .set{ tumor_pileupsummaries }
-
-    normal_pileupsummaries.combine(tumor_pileupsummaries)
-        .map{ it -> it.flatten() + ['tumor_paired'] }
-        .set{ paired_pileups }
-
-    normal_pileupsummaries.map{ it -> it + ['NO_ID', '/scratch/NO_FILE.table', 'normal'] }
-        .set{ normal_pileups }
-
-    tumor_pileupsummaries.map{ ['NO_ID', '/scratch/NO_FILE.table'] + it + 'tumor' }
-        .set{ tumor_pileups }
-
-    input_ch_calculate_contamination = normal_pileups
-
-    def sample_types = params.samples_to_process.collect{ sample -> sample.sample_type }
-
-    if (sample_types.contains('normal') && sample_types.contains('tumor')) {
-        input_ch_calculate_contamination
-            .mix(paired_pileups)
-            .set{ input_ch_calculate_contamination }
-    } else {
-        input_ch_calculate_contamination
-            .mix(tumor_pileups)
-            .set{ input_ch_calculate_contamination }
+        run_DepthOfCoverage_GATK(
+            params.reference_fasta,
+            params.reference_fasta_fai,
+            params.reference_fasta_dict,
+            all_intervals,
+            input_ch_merged_bams
+        )
     }
-
-    run_CalculateContamination_GATK(input_ch_calculate_contamination)
-
-    run_DepthOfCoverage_GATK(
-        params.reference_fasta,
-        params.reference_fasta_fai,
-        params.reference_fasta_dict,
-        input_ch_summary_intervals,
-        input_ch_merged_bams
-    )
 }

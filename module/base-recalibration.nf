@@ -22,11 +22,11 @@ include { delete_input } from './delete-input.nf'
         bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
         bundle_v0_dbsnp138_vcf_gz: path to dbSNP variants
         bundle_v0_dbsnp138_vcf_gz_tbi: path to index of dbSNP variants
-        all_intervals: list or tuple of paths to all split intervals
+        input_intervals: list or tuple of paths to all split intervals (targeted or chromosomes)
         input_bams: list or tuple of paths to input  BAMs
         input_bams_bai: list or tuple of paths to input BAM indices
         sample_id: identifier for the sample
-        
+
     params:
         params.output_dir_base: string(path)
         params.log_output_dir: string(path)
@@ -54,24 +54,24 @@ process run_BaseRecalibrator_GATK {
     path(bundle_known_indels_vcf_gz_tbi)
     path(bundle_v0_dbsnp138_vcf_gz)
     path(bundle_v0_dbsnp138_vcf_gz_tbi)
-    path(intervals)
-    tuple val(sample_id), path(input_bam), path(input_bam_bai), val(interval_id), path(interval_path), val(has_unmapped)
+    path(input_intervals)
+    tuple val(sample_id), path(bam), path(bam_index), val(interval_id), path(split_interval), val(has_unmapped)
 
     output:
     tuple val(sample_id), path("${sample_id}_${interval_id}_recalibration_table.grp"), emit: recalibration_table
 
     script:
-    base_interval_option = "--intervals ${interval_path}"
+    base_interval_option = "--intervals ${split_interval}"
     unmapped_interval_option = has_unmapped ? "--intervals unmapped" : ""
     interval_padding = params.is_targeted ? "--interval-padding 100" : ""
     combined_interval_options = params.is_targeted ?
-        "--intervals \"\$(realpath ${intervals})\" ${interval_padding} --interval-set-rule INTERSECTION" :
+        "--intervals \"\$(realpath ${input_intervals})\" ${interval_padding} --interval-set-rule INTERSECTION" :
         "${unmapped_interval_option} --interval-set-rule UNION"
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         BaseRecalibrator \
-        --input ${input_bam} \
+        --input ${bam} \
         --reference ${reference_fasta} \
         --verbosity INFO \
         --known-sites ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
@@ -128,10 +128,10 @@ process run_GatherBQSRReports_GATK {
         reference_fasta: path to reference genome fasta file
         reference_fasta_fai: path to index for reference fasta
         reference_fasta_dict: path to dictionary for reference fasta
-        input_bam: path to input BAM
-        input_bam_index: path to input BAM index
+        bam: path to input BAM
+        bam_index: path to input BAM index
         interval: path to specific intervals file associated with input BAM
-        includes_unmapped: boolean to indicate if unmapped reads are included in input BAM
+        has_unmapped: boolean to indicate if unmapped reads are included in input BAM
         sample_id: Identifier for sample being processed
         recalibration_table: path to base recalibration table
 
@@ -156,21 +156,21 @@ process run_ApplyBQSR_GATK {
     path(reference_fasta)
     path(reference_fasta_fai)
     path(reference_fasta_dict)
-    tuple path(input_bam),
-          path(input_bam_index),
+    tuple path(bam),
+          path(bam_index),
           val(interval_id),
-          path(interval),
-          val(includes_unmapped),
+          path(split_interval),
+          val(has_unmapped),
           val(sample_id),
           path(recalibration_table)
 
     output:
-    tuple val(sample_id), path(output_filename), val(interval_id), val(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
-    tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
+    tuple val(sample_id), path(output_filename), val(interval_id), path(split_interval), val(has_unmapped), emit: output_ch_apply_bqsr
+    tuple path(bam), path(bam_index), emit: output_ch_deletion
 
     script:
-    unmapped_interval_option = (includes_unmapped) ? "--intervals unmapped" : ""
-    combined_interval_options = "--intervals ${interval} ${unmapped_interval_option}"
+    unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
+    combined_interval_options = "--intervals ${split_interval} ${unmapped_interval_option}"
     output_filename = generate_standard_filename(
         params.aligner,
         params.dataset_id,
@@ -185,7 +185,7 @@ process run_ApplyBQSR_GATK {
 
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
         ApplyBQSR \
-        --input ${input_bam} \
+        --input ${bam} \
         --bqsr-recal-file ${recalibration_table} \
         --reference ${reference_fasta} \
         --read-filter SampleReadFilter \
@@ -196,6 +196,29 @@ process run_ApplyBQSR_GATK {
         samtools view -h | \
         awk '(/^@RG/ && /SM:${sample_id}/) || ! /^@RG/' | \
         samtools view -b -o ${output_filename}
+    """
+}
+
+process run_index_SAMtools {
+    container params.docker_image_samtools
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
+        mode: "copy",
+        enabled: params.save_intermediate_files,
+        pattern: "*.bai"
+
+    ext log_dir_suffix: { "-${sample_id}" }
+
+    input:
+    tuple val(sample_id), path(bam), val(interval_id), path(split_interval), val(has_unmapped)
+
+    output:
+    tuple val(sample_id), path(bam), path("${bam}.bai"), val(interval_id), path(split_interval), val(has_unmapped), emit: output_ch_apply_bqsr_indexed
+
+    script:
+    """
+    set -euo pipefail
+
+    samtools index ${bam}
     """
 }
 
@@ -213,20 +236,20 @@ workflow recalibrate_base {
     }
 
     input_samples
-        .filter{ s -> (!given_recal_tables.containsKey(s.id)) }
+        .filter{ s -> (!given_recal_tables.containsKey(s.sample_id)) }
         .map{ ir_sample ->
             [
-                ir_sample.id,
+                ir_sample.sample_id,
                 ir_sample.bam,
                 ir_sample.bam_index,
                 ir_sample.interval_id,
-                ir_sample.interval_path,
+                ir_sample.split_interval,
                 ir_sample.has_unmapped
             ]
         }
         .set{ input_ch_base_recalibrator }
 
-    base_recalibrator_intervals = (params.is_targeted) ? params.intervals : "/scratch/NO_FILE.interval_list"
+    input_input_intervals = (params.is_targeted) ? params.intervals : "/scratch/NO_FILE.interval_list"
 
     run_BaseRecalibrator_GATK(
         params.reference_fasta,
@@ -238,7 +261,7 @@ workflow recalibrate_base {
         params.bundle_known_indels_vcf_gz_tbi,
         params.bundle_v0_dbsnp138_vcf_gz,
         params.bundle_v0_dbsnp138_vcf_gz_tbi,
-        base_recalibrator_intervals,
+        input_input_intervals,
         input_ch_base_recalibrator
     )
 
@@ -283,7 +306,7 @@ workflow recalibrate_base {
     input_samples
         .map{ input_sample ->
             [
-                input_sample.id,
+                input_sample.sample_id,
                 input_sample
             ]
         }
@@ -296,9 +319,9 @@ workflow recalibrate_base {
                 joined_input[2].bam,
                 joined_input[2].bam_index,
                 joined_input[2].interval_id,
-                joined_input[2].interval_path,
+                joined_input[2].split_interval,
                 joined_input[2].has_unmapped,
-                joined_input[2].id,
+                joined_input[2].sample_id,
                 joined_input[1].recal_table
             ]
         }
@@ -311,16 +334,19 @@ workflow recalibrate_base {
         input_ch_apply_bqsr
     )
 
-    // val(sample_id), path(output_filename), path("${output_filename}.bai"), val(interval_id), val(interval), val(includes_unmapped)
-    run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
+    run_index_SAMtools(
+        run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
+    )
+
+    run_index_SAMtools.out.output_ch_apply_bqsr_indexed
         .map{ bqsred_sample ->
             [
-                'id': bqsred_sample[0],
+                'sample_id': bqsred_sample[0],
                 'bam': bqsred_sample[1],
-                'bam_index': "/scratch/NO_INDEX.bai",
-                'interval_id': bqsred_sample[2],
-                'interval_path': bqsred_sample[3],
-                'has_unmapped': bqsred_sample[4]
+                'bam_index': bqsred_sample[2],
+                'interval_id': bqsred_sample[3],
+                'split_interval': bqsred_sample[4],
+                'has_unmapped': bqsred_sample[5]
             ]
         }
         .set{ output_ch_base_recalibration }
