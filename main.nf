@@ -56,6 +56,7 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         output_dir: params.output_dir_base
         ]
     )
+include { indexFile } from './external/pipeline-Nextflow-module/modules/common/indexFile/main.nf'
 include { realign_indels } from './module/indel-realignment.nf'
 include { recalibrate_base } from './module/base-recalibration.nf'
 include { merge_bams } from './module/merge-bam.nf'
@@ -66,17 +67,6 @@ include {
 } from './module/summary-qc.nf'
 include { delete_input } from './module/delete-input.nf'
 include { sanitize_string } from './external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
-
-// Returns the index file for the given bam or vcf
-def indexFile(bam_or_vcf) {
-    if (bam_or_vcf.endsWith('.bam')) {
-        return "${bam_or_vcf}.bai"
-    } else if (bam_or_vcf.endsWith('vcf.gz')) {
-        return "${bam_or_vcf}.tbi"
-    } else {
-        throw new Exception("Index file for ${bam_or_vcf} file type not supported. Use .bam or .vcf.gz files.")
-    }
-}
 
 workflow {
     /**
