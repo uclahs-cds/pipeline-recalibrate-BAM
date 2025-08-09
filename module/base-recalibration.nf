@@ -165,7 +165,7 @@ process run_ApplyBQSR_GATK {
           path(recalibration_table)
 
     output:
-    tuple val(sample_id), path(output_filename), val(interval_id), val(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
+    tuple val(sample_id), path("${output_filename}.bam"), path("${output_filename}.bam.bai"), val(interval_id), val(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
     tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
 
     script:
@@ -177,7 +177,7 @@ process run_ApplyBQSR_GATK {
         sample_id,
         [
             'additional_tools': ["GATK-${params.gatk_version}"],
-            'additional_information': "recalibrated-${interval_id}.bam"
+            'additional_information': "recalibrated-${interval_id}"
         ]
     )
     """
@@ -191,11 +191,11 @@ process run_ApplyBQSR_GATK {
         --read-filter SampleReadFilter \
         ${combined_interval_options} \
         --emit-original-quals ${params.is_emit_original_quals} \
-        --output /dev/stdout \
-        --sample ${sample_id} 2> .command.err | \
-        samtools view -h | \
-        awk '(/^@RG/ && /SM:${sample_id}/) || ! /^@RG/' | \
-        samtools view -b -o ${output_filename}
+        --output ${output_filename}.bam \
+        --create-output-bam-index true \
+        --sample ${sample_id}
+
+    mv ${output_filename}.bai ${output_filename}.bam.bai
     """
 }
 
@@ -311,16 +311,16 @@ workflow recalibrate_base {
         input_ch_apply_bqsr
     )
 
-    // val(sample_id), path(output_filename), path("${output_filename}.bai"), val(interval_id), val(interval), val(includes_unmapped)
+    // sample_id, bam, bam_index, interval_id, interval, includes_unmapped
     run_ApplyBQSR_GATK.out.output_ch_apply_bqsr
         .map{ bqsred_sample ->
             [
                 'id': bqsred_sample[0],
                 'bam': bqsred_sample[1],
-                'bam_index': "/scratch/NO_INDEX.bai",
-                'interval_id': bqsred_sample[2],
-                'interval_path': bqsred_sample[3],
-                'has_unmapped': bqsred_sample[4]
+                'bam_index': bqsred_sample[2],
+                'interval_id': bqsred_sample[3],
+                'interval_path': bqsred_sample[4],
+                'has_unmapped': bqsred_sample[5]
             ]
         }
         .set{ output_ch_base_recalibration }
