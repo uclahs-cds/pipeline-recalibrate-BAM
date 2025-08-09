@@ -101,27 +101,24 @@ workflow gatherbams {
             [
                 interval_bam.id,
                 [
-                    'key': sort_key_map[interval_bam.interval_id],
+                    'key': sort_key_map.getOrDefault(interval_bam.interval_id, 1000),
                     'bam': interval_bam.bam
                 ]
             ]
         }
         .groupTuple()
-        .view{ "BEFORESORT: $it" }
         .map { grouped_interval_bams ->
             [
                 grouped_interval_bams[0],
                 grouped_interval_bams[1].sort{ bam_data -> bam_data.key }
             ]
         }
-        .view{ "AFTERSORT: $it" }
         .map{ sorted_interval_bams ->
             [
                 sorted_interval_bams[0],
                 sorted_interval_bams[1].collect{ element -> element.bam }
             ]
         }
-        .view{ "AFTERCOLLECT: $it" }
         .set{ input_ch_gatherbams }
 
     run_GatherBamFiles_Picard(input_ch_gatherbams)
