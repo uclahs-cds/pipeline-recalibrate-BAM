@@ -226,7 +226,7 @@ workflow recalibrate_base {
         }
         .set{ input_ch_base_recalibrator }
 
-    base_recalibrator_intervals = (params.is_targeted) ? params.intervals : "/scratch/NO_FILE.interval_list"
+    base_recalibrator_intervals = (params.is_targeted) ? params.intervals : "${params.work_dir}/NO_FILE.interval_list"
 
     run_BaseRecalibrator_GATK(
         params.reference_fasta,
