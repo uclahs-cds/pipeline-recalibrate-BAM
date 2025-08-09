@@ -1,6 +1,6 @@
 include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
 include {
-    remove_intermediate_files as remove_unmerged_BAMs
+    // remove_intermediate_files as remove_unmerged_BAMs
     remove_intermediate_files as remove_merged_BAM
     } from '../external/pipeline-Nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
         options: [
@@ -144,10 +144,10 @@ workflow mergesamfiles {
 
     run_MergeSamFiles_Picard(input_ch_merge)
 
-    remove_unmerged_BAMs(
-        run_MergeSamFiles_Picard.out.output_ch_deletion.flatten(),
-        "merge_complete"
-    )
+    // remove_unmerged_BAMs(
+    //     run_MergeSamFiles_Picard.out.output_ch_deletion.flatten(),
+    //     "merge_complete"
+    // )
 
     deduplicate_records_SAMtools(run_MergeSamFiles_Picard.out.merged_bam)
 
