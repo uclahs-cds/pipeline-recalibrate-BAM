@@ -56,13 +56,21 @@ include { extract_GenomeIntervals } from './external/pipeline-Nextflow-module/mo
         output_dir: params.output_dir_base
         ]
     )
+include {
+    remove_intermediate_files as remove_interval_BAMs
+    } from './external/pipeline-Nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
+        options: [
+            save_intermediate_files: params.save_intermediate_files,
+            output_dir: params.output_dir_base,
+            log_output_dir: "${params.log_output_dir}/process-log"
+            ]
+        )
 include { indexFile } from './external/pipeline-Nextflow-module/modules/common/indexFile/main.nf'
 include { realign_indels } from './module/indel-realignment.nf'
 include { recalibrate_base } from './module/base-recalibration.nf'
 include { merge_bams } from './module/merge-bam.nf'
 include {
-    run_GetPileupSummaries_GATK
-    run_CalculateContamination_GATK
+    contamination_qc
     run_DepthOfCoverage_GATK
 } from './module/summary-qc.nf'
 include { delete_input } from './module/delete-input.nf'
@@ -205,10 +213,44 @@ workflow {
 
 
     /**
-    *   Summary and QC processes
+    *   Contamination calculation
+    */
+    contamination_qc(
+        output_ch_bqsr,
+        samples_with_index
+    )
+
+    /**
+    *   Remove interval BAMs
+    */
+    output_ch_bqsr
+        .map{ bqsred_bams -> [bqsred_bams.id, bqsred_bams.bam] }
+        .groupTuple()
+        .map{ grouped_bams -> [grouped_bams[0], ['bams': grouped_bams[1]]] }
+        .set{ interval_bams_to_delete }
+
+    merge_bams.out.output_ch_merge_bams
+        .map{ merged_bam -> merged_bam.sample }
+        .set{ samples_merged }
+
+    interval_bams_to_delete
+        .join(samples_merged)
+        .map{ joined_on_merged -> [joined_on_merged[0], joined_on_merged[1]] }
+        .join(contamination_qc.out.pileupsgathered)
+        .map{ joined_on_contamination -> joined_on_contamination[1] }
+        .flatten()
+        .set{ input_ch_delete_interval_bams }
+
+    remove_interval_BAMs(
+        input_ch_delete_interval_bams,
+        "ready_to_delete"
+    )
+
+    /**
+    *   Depth of Coverage
     */
     merge_bams.out.output_ch_merge_bams
-        .map{ [it.sample, it.bam, it.bam_index] }
+        .map{ merged_bam -> [merged_bam.sample, merged_bam.bam, merged_bam.bam_index] }
         .set{ input_ch_merged_bams }
 
     summary_intervals = (params.is_targeted) ?
@@ -218,54 +260,6 @@ workflow {
     summary_intervals.combine(input_ch_merged_bams)
         .map{ it[0] }
         .set{ input_ch_summary_intervals }
-
-    run_GetPileupSummaries_GATK(
-        params.reference_fasta,
-        params.reference_fasta_fai,
-        params.reference_fasta_dict,
-        params.bundle_contest_hapmap_3p3_vcf_gz,
-        params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
-        input_ch_summary_intervals,
-        input_ch_merged_bams
-    )
-
-    samples_with_index
-        .filter{ it.sample_type == 'normal' }
-        .map{ it -> [sanitize_string(it.id)] }
-        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
-        .set{ normal_pileupsummaries }
-
-    samples_with_index
-        .filter{ it.sample_type == 'tumor' }
-        .map{ it -> [sanitize_string(it.id)] }
-        .join(run_GetPileupSummaries_GATK.out.pileupsummaries)
-        .set{ tumor_pileupsummaries }
-
-    normal_pileupsummaries.combine(tumor_pileupsummaries)
-        .map{ it -> it.flatten() + ['tumor_paired'] }
-        .set{ paired_pileups }
-
-    normal_pileupsummaries.map{ it -> it + ['NO_ID', '/scratch/NO_FILE.table', 'normal'] }
-        .set{ normal_pileups }
-
-    tumor_pileupsummaries.map{ ['NO_ID', '/scratch/NO_FILE.table'] + it + 'tumor' }
-        .set{ tumor_pileups }
-
-    input_ch_calculate_contamination = normal_pileups
-
-    def sample_types = params.samples_to_process.collect{ sample -> sample.sample_type }
-
-    if (sample_types.contains('normal') && sample_types.contains('tumor')) {
-        input_ch_calculate_contamination
-            .mix(paired_pileups)
-            .set{ input_ch_calculate_contamination }
-    } else {
-        input_ch_calculate_contamination
-            .mix(tumor_pileups)
-            .set{ input_ch_calculate_contamination }
-    }
-
-    run_CalculateContamination_GATK(input_ch_calculate_contamination)
 
     run_DepthOfCoverage_GATK(
         params.reference_fasta,
