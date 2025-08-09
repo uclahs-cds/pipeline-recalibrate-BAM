@@ -1,13 +1,13 @@
 include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
-include {
-    remove_intermediate_files as remove_ungathered_BAMs
-    } from '../external/pipeline-Nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
-        options: [
-            save_intermediate_files: params.save_intermediate_files,
-            output_dir: params.output_dir_base,
-            log_output_dir: "${params.log_output_dir}/process-log"
-            ]
-        )
+// include {
+//     remove_intermediate_files as remove_ungathered_BAMs
+//     } from '../external/pipeline-Nextflow-module/modules/common/intermediate_file_removal/main.nf' addParams(
+//         options: [
+//             save_intermediate_files: params.save_intermediate_files,
+//             output_dir: params.output_dir_base,
+//             log_output_dir: "${params.log_output_dir}/process-log"
+//             ]
+//         )
 include { calculate_sha512 } from './checksum.nf'
 
 List getChromosomeOrderFromDict(dictPath) {
@@ -123,10 +123,10 @@ workflow gatherbams {
 
     run_GatherBamFiles_Picard(input_ch_gatherbams)
 
-    remove_ungathered_BAMs(
-        run_GatherBamFiles_Picard.out.bams_for_deletion.flatten(),
-        "gather_complete"
-    )
+    // remove_ungathered_BAMs(
+    //     run_GatherBamFiles_Picard.out.bams_for_deletion.flatten(),
+    //     "gather_complete"
+    // )
 
     run_GatherBamFiles_Picard.out.gathered_bam
         .map{ a_gathered_bam ->
