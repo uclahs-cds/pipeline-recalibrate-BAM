@@ -224,13 +224,13 @@ workflow {
     *   Remove interval BAMs
     */
     output_ch_bqsr
-        .map{ bqsred_bams -> [bqsred_bams.id, bqsred_bams.bam] }
+        .map{ bqsred_bams -> [bqsred_bams.sample_id, bqsred_bams.bam] }
         .groupTuple()
         .map{ grouped_bams -> [grouped_bams[0], ['bams': grouped_bams[1]]] }
         .set{ interval_bams_to_delete }
 
     merge_bams.out.output_ch_merge_bams
-        .map{ merged_bam -> merged_bam.sample }
+        .map{ merged_bam -> merged_bam.sample_id }
         .set{ samples_merged }
 
     interval_bams_to_delete
@@ -250,7 +250,7 @@ workflow {
     *   Depth of Coverage
     */
     merge_bams.out.output_ch_merge_bams
-        .map{ merged_bam -> [merged_bam.sample, merged_bam.bam, merged_bam.bam_index] }
+        .map{ merged_bam -> [merged_bam.sample_id, merged_bam.bam, merged_bam.bam_index] }
         .set{ input_ch_merged_bams }
 
     summary_intervals = (params.is_targeted) ?
