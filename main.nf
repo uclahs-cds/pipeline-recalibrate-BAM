@@ -237,7 +237,7 @@ workflow {
         .join(samples_merged)
         .map{ joined_on_merged -> [joined_on_merged[0], joined_on_merged[1]] }
         .join(contamination_qc.out.pileupsgathered)
-        .map{ joined_on_contamination -> joined_on_contamination[1] }
+        .map{ joined_on_contamination -> joined_on_contamination[1]['bams'] }
         .flatten()
         .set{ input_ch_delete_interval_bams }
 
