@@ -10,7 +10,8 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
         bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi: path to index file for Mills and 1000g variants
         bundle_known_indels_vcf_gz: path to set of known indels
         bundle_known_indels_vcf_gz_tbi: path to index of known indels VCF
-        (bam, bam_index, interval_id, interval):  
+        input_intervals: list or tuple of paths to all split intervals
+        (bam, bam_index, interval_id, split_interval):  
             tuple of input BAM and index files, interval ID, and interval
         
     params:
@@ -38,16 +39,16 @@ process run_RealignerTargetCreator_GATK {
     path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
-    path(original_intervals)
+    path(input_intervals)
     tuple path(bam), path(bam_index), val(interval_id), path(interval), val(has_unmapped)
 
     output:
-    tuple path(bam), path(bam_index), val(interval_id), path(interval), val(has_unmapped), path("${output_rtc_intervals}"), emit: ir_targets
+    tuple path(bam), path(bam_index), val(interval_id), path(split_interval), val(has_unmapped), path("${output_rtc_intervals}"), emit: ir_targets
 
     script:
     arg_bam = bam.collect{ "--input_file '${it}'" }.join(' ')
     interval_padding = params.is_targeted ? "--interval_padding 100" : ""
-    targeted_interval_params = params.is_targeted ? "--intervals ${params.intervals} --interval_set_rule INTERSECTION" : ""
+    targeted_interval_params = params.is_targeted ? "--intervals ${input_intervals} --interval_set_rule INTERSECTION" : ""
     output_rtc_intervals = "${params.patient_id}_RTC_${interval_id}.intervals"
     """
     set -euo pipefail
@@ -58,7 +59,7 @@ process run_RealignerTargetCreator_GATK {
         --reference_sequence ${reference_fasta} \
         --known ${bundle_mills_and_1000g_gold_standard_indels_vcf_gz} \
         --known ${bundle_known_indels_vcf_gz} \
-        --intervals ${interval} \
+        --intervals ${split_interval} \
         --out ${output_rtc_intervals} \
         --allow_potentially_misencoded_quality_scores \
         --num_threads ${task.cpus} \
@@ -107,15 +108,15 @@ process run_IndelRealigner_GATK {
     path(bundle_mills_and_1000g_gold_standard_indels_vcf_gz_tbi)
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
-    tuple path(bam), path(bam_index), val(interval_id), path(scatter_intervals), val(has_unmapped), path(target_intervals_RTC)
+    tuple path(bam), path(bam_index), val(interval_id), path(split_interval), val(has_unmapped), path(target_intervals_RTC)
 
     output:
-    tuple path("*${output_extension}.bam"), path("*${output_extension}.bai"), val(interval_id), path(scatter_intervals), val(has_unmapped), val(output_extension), emit: output_ch_indel_realignment
+    tuple path("*${output_extension}.bam"), path("*${output_extension}.bai"), val(interval_id), path(split_interval), val(has_unmapped), val(output_extension), emit: output_ch_indel_realignment
 
     script:
     arg_bam = bam.sort().collect{ "--input_file '$it'" }.join(' ')
     unmapped_interval_option = (has_unmapped) ? "--intervals unmapped" : ""
-    combined_interval_options = "--intervals ${scatter_intervals} ${unmapped_interval_option}"
+    combined_interval_options = "--intervals ${split_interval} ${unmapped_interval_option}"
     output_extension = "indelrealigned-${interval_id}"
     """
     set -euo pipefail
@@ -145,7 +146,7 @@ workflow realign_indels {
                 it.bams,
                 it.indices,
                 it.interval_id,
-                it.interval_path,
+                it.split_interval,
                 it.has_unmapped
             ]
         }
@@ -188,9 +189,9 @@ workflow realign_indels {
                         'bam': elem,
                         'bam_index': (it[1] in List) ? it[1][index] : it[1],
                         'interval_id': it[2],
-                        'interval_path': it[3],
+                        'split_interval': it[3],
                         'has_unmapped': it[4],
-                        'id': basename_map[file(elem).baseName.replace(it[5], "")]
+                        'sample_id': basename_map[file(elem).baseName.replace(it[5], "")]
                     ]
                 )
             }

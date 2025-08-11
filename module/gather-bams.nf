@@ -99,7 +99,7 @@ workflow gatherbams {
     bams_to_merge
         .map { interval_bam ->
             [
-                interval_bam.id,
+                interval_bam.sample_id,
                 [
                     'key': sort_key_map.getOrDefault(interval_bam.interval_id, 1000),
                     'bam': interval_bam.bam
@@ -131,7 +131,7 @@ workflow gatherbams {
     run_GatherBamFiles_Picard.out.gathered_bam
         .map{ a_gathered_bam ->
             [
-                'sample': a_gathered_bam[0],
+                'sample_id': a_gathered_bam[0],
                 'bam': a_gathered_bam[1],
                 'bam_index': a_gathered_bam[2]
             ]

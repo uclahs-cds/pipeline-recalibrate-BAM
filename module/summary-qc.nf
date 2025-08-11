@@ -250,16 +250,16 @@ workflow contamination_qc {
     bams_for_qc
         .map{ input_bam ->
             [
-                input_bam.id,
+                input_bam.sample_id,
                 input_bam.bam,
                 input_bam.bam_index,
                 input_bam.interval_id,
-                input_bam.interval_path
+                input_bam.split_interval
             ]
         }
         .set{ input_ch_pileupsummaries }
 
-    given_intervals = (params.is_targeted) ? params.intervals : "${params.work_dir}/NO_FILE.interval_list"
+    input_intervals = (params.is_targeted) ? params.intervals : "${params.work_dir}/NO_FILE.interval_list"
 
     run_GetPileupSummaries_GATK(
         params.reference_fasta,
@@ -267,7 +267,7 @@ workflow contamination_qc {
         params.reference_fasta_dict,
         params.bundle_contest_hapmap_3p3_vcf_gz,
         params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
-        given_intervals,
+        input_intervals,
         input_ch_pileupsummaries
     )
 
@@ -287,13 +287,13 @@ workflow contamination_qc {
 
     samples_with_index
         .filter{ it.sample_type == 'normal' }
-        .map{ it -> [sanitize_string(it.id)] }
+        .map{ it -> [sanitize_string(it.sample_id)] }
         .join(run_GatherPileupSummaries_GATK.out.gatheredsummaries)
         .set{ normal_pileupsummaries }
 
     samples_with_index
         .filter{ it.sample_type == 'tumor' }
-        .map{ it -> [sanitize_string(it.id)] }
+        .map{ it -> [sanitize_string(it.sample_id)] }
         .join(run_GatherPileupSummaries_GATK.out.gatheredsummaries)
         .set{ tumor_pileupsummaries }
 

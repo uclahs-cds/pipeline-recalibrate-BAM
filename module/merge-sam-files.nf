@@ -138,7 +138,7 @@ workflow mergesamfiles {
 
     main:
     bams_to_merge
-        .map{ [it.id, it.bam] }
+        .map{ [it.sample_id, it.bam] }
         .groupTuple()
         .set{ input_ch_merge }
 
@@ -165,7 +165,7 @@ workflow mergesamfiles {
     run_index_SAMtools.out.indexed_out
         .map{
             [
-                'sample': it[0],
+                'sample_id': it[0],
                 'bam': it[1],
                 'bam_index': it[2]
             ]
