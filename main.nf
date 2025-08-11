@@ -124,7 +124,7 @@ workflow {
         .map{ interval_path ->
             [
                 'interval_id': file(interval_path).getName().replace('-contig.interval_list', ''),
-                'interval_path': interval_path
+                'split_interval': interval_path
             ]
         }
         .map{ interval_data ->
@@ -183,7 +183,7 @@ workflow {
                 [
                     'bam': [raw_samples.bam],
                     'bam_index': [raw_samples.index],
-                    'id': raw_samples.sample_id
+                    'sample_id': raw_samples.sample_id
                 ]
             }
             .combine(input_ch_intervals)
