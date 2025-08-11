@@ -176,7 +176,7 @@ workflow realign_indels {
 
     def basename_map = [:]
     params.samples_to_process.each { sample_data ->
-        basename_map["${file(sample_data.path).baseName}"] = sample_data.id
+        basename_map["${file(sample_data.bam).baseName}"] = sample_data.sample_id
     }
 
     run_IndelRealigner_GATK.out.output_ch_indel_realignment

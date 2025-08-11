@@ -338,7 +338,7 @@ workflow recalibrate_base {
         // Pipeline inputs directly sent to BQSR, handle deletion based on metapipeline params
         Channel.from(params.samples_to_process)
             .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
-            .map{ sample -> sample.path }
+            .map{ sample -> sample.bam }
             .flatten()
             .unique()
             .set{ input_bams_to_delete }

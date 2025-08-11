@@ -86,16 +86,16 @@ workflow {
     */
     Channel.from(params.samples_to_process)
         .map { sample ->
-            sample["index"] = indexFile(sample.path)
+            sample["index"] = indexFile(sample.bam)
             return sample
         }
         .set{ samples_with_index }
 
     samples_with_index
         .flatMap { full_sample ->
-            def all_metadata = full_sample.findAll { it.key != "path" }
+            def all_metadata = full_sample.findAll { it.key != "bam" }
             return [
-                [full_sample.path, [all_metadata, "path"]],
+                [full_sample.bam, [all_metadata, "bam"]],
                 [full_sample.index, [[id: full_sample.id], "index"]]
             ]
         } | run_validate_PipeVal_with_metadata
@@ -140,7 +140,7 @@ workflow {
     if (params.run_indelrealignment) {
         samples_with_index
             .reduce( ['bams': [], 'indices': []] ){ a, b ->
-                a.bams.add(b.path);
+                a.bams.add(b.bam);
                 a.indices.add(b.index);
                 return a
             }
@@ -160,7 +160,7 @@ workflow {
         */
         samples_with_index
             .filter{ params.metapipeline_states_to_delete.contains(it.sample_type) }
-            .map{ sample -> sample.path }
+            .map{ sample -> sample.bam }
             .flatten()
             .unique()
             .set{ input_bams }
@@ -181,9 +181,9 @@ workflow {
         samples_with_index
             .map{ raw_samples ->
                 [
-                    'bam': [raw_samples.path],
+                    'bam': [raw_samples.bam],
                     'bam_index': [raw_samples.index],
-                    'id': raw_samples.id
+                    'id': raw_samples.sample_id
                 ]
             }
             .combine(input_ch_intervals)
