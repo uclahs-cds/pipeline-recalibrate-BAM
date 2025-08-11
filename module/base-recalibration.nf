@@ -165,7 +165,7 @@ process run_ApplyBQSR_GATK {
           path(recalibration_table)
 
     output:
-    tuple val(sample_id), path("${output_filename}.bam"), path("${output_filename}.bam.bai"), val(interval_id), val(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
+    tuple val(sample_id), path("${output_filename}.bam"), path("${output_filename}.bam.bai"), val(interval_id), path(interval), val(includes_unmapped), emit: output_ch_apply_bqsr
     tuple path(input_bam), path(input_bam_index), emit: output_ch_deletion
 
     script:
