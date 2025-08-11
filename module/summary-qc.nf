@@ -272,7 +272,7 @@ workflow contamination_qc {
     )
 
     run_GetPileupSummaries_GATK.out.pileupsummaries
-        .filter{ summary -> (new File(summary[1])).length() != 0 } // Filter out non-overlapping summary files
+        .filter{ summary -> (new File(summary[1].toString())).length() != 0 } // Filter out non-overlapping summary files
         .groupTuple()
         .set{ input_ch_gathersummaries }
 
