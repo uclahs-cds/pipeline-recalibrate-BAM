@@ -40,7 +40,7 @@ process run_RealignerTargetCreator_GATK {
     path(bundle_known_indels_vcf_gz)
     path(bundle_known_indels_vcf_gz_tbi)
     path(input_intervals)
-    tuple path(bam), path(bam_index), val(interval_id), path(interval), val(has_unmapped)
+    tuple path(bam), path(bam_index), val(interval_id), path(split_interval), val(has_unmapped)
 
     output:
     tuple path(bam), path(bam_index), val(interval_id), path(split_interval), val(has_unmapped), path("${output_rtc_intervals}"), emit: ir_targets
