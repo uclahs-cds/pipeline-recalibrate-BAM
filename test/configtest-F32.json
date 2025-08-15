@@ -52,6 +52,10 @@
     "params": {
       "aligner": "BWA-MEM2-2.2.1",
       "base_allocations": {
+        "calculate_sha512": {
+          "cpus": "1",
+          "memory": "1 GB"
+        },
         "deduplicate_records_SAMtools": {
           "cpus": "2",
           "memory": "57.6 GB"
@@ -64,11 +68,11 @@
           "cpus": "1",
           "memory": "1 GB"
         },
-        "remove_merged_BAM": {
+        "remove_interval_BAMs": {
           "cpus": "1",
           "memory": "1 GB"
         },
-        "remove_unmerged_BAMs": {
+        "remove_merged_BAM": {
           "cpus": "1",
           "memory": "1 GB"
         },
@@ -78,31 +82,39 @@
         },
         "run_BaseRecalibrator_GATK": {
           "cpus": "1",
-          "memory": "57.6 GB"
+          "memory": "2 GB"
         },
         "run_CalculateContamination_GATK": {
           "cpus": "1",
-          "memory": "28.8 GB"
+          "memory": "5 GB"
         },
         "run_DepthOfCoverage_GATK": {
           "cpus": "1",
           "memory": "28.8 GB"
         },
+        "run_GatherBamFiles_Picard": {
+          "cpus": "1",
+          "memory": "2 GB"
+        },
+        "run_GatherPileupSummaries_GATK": {
+          "cpus": "1",
+          "memory": "2 GB"
+        },
         "run_GetPileupSummaries_GATK": {
           "cpus": "1",
-          "memory": "28.8 GB"
+          "memory": "5 GB"
         },
         "run_IndelRealigner_GATK": {
-          "cpus": "4",
-          "memory": "6 GB"
+          "cpus": "1",
+          "memory": "4 GB"
         },
         "run_MergeSamFiles_Picard": {
           "cpus": "2",
           "memory": "57.6 GB"
         },
         "run_RealignerTargetCreator_GATK": {
-          "cpus": "4",
-          "memory": "6 GB"
+          "cpus": "1",
+          "memory": "4 GB"
         },
         "run_SplitIntervals_GATK": {
           "cpus": "1",
@@ -208,6 +220,18 @@
             "strategy": "exponential"
           }
         },
+        "run_GatherBamFiles_Picard": {
+          "memory": {
+            "operand": "4",
+            "strategy": "exponential"
+          }
+        },
+        "run_GatherPileupSummaries_GATK": {
+          "memory": {
+            "operand": "2",
+            "strategy": "exponential"
+          }
+        },
         "run_GetPileupSummaries_GATK": {
           "memory": {
             "operand": "2",
@@ -243,8 +267,8 @@
       "run_indelrealignment": true,
       "samples_to_process": [
         {
-          "id": "4915723",
-          "path": "/hot/data/unregistered/SMC-HET/tumours/A-mini/bams/n1/output/S2.T-n1.bam",
+          "bam": "/hot/data/unregistered/SMC-HET/tumours/A-mini/bams/n1/output/S2.T-n1.bam",
+          "sample_id": "4915723",
           "sample_type": "tumor"
         }
       ],
@@ -342,6 +366,10 @@
           "closure": "retry_updater(42 GB, exponential, 2, $task.attempt, memory)"
         }
       },
+      "withName:calculate_sha512": {
+        "cpus": "1",
+        "memory": "1 GB"
+      },
       "withName:deduplicate_records_SAMtools": {
         "cpus": "2",
         "memory": {
@@ -359,11 +387,11 @@
         "cpus": "1",
         "memory": "1 GB"
       },
-      "withName:remove_merged_BAM": {
+      "withName:remove_interval_BAMs": {
         "cpus": "1",
         "memory": "1 GB"
       },
-      "withName:remove_unmerged_BAMs": {
+      "withName:remove_merged_BAM": {
         "cpus": "1",
         "memory": "1 GB"
       },
@@ -379,19 +407,19 @@
       "withName:run_BaseRecalibrator_GATK": {
         "cpus": "1",
         "memory": {
-          "1": "57.6 GB",
-          "2": "64 GB",
-          "3": "64 GB",
-          "closure": "retry_updater(57.6 GB, exponential, 2, $task.attempt, memory)"
+          "1": "2 GB",
+          "2": "4 GB",
+          "3": "8 GB",
+          "closure": "retry_updater(2 GB, exponential, 2, $task.attempt, memory)"
         }
       },
       "withName:run_CalculateContamination_GATK": {
         "cpus": "1",
         "memory": {
-          "1": "28.8 GB",
-          "2": "57.6 GB",
-          "3": "64 GB",
-          "closure": "retry_updater(28.8 GB, exponential, 2, $task.attempt, memory)"
+          "1": "5 GB",
+          "2": "10 GB",
+          "3": "20 GB",
+          "closure": "retry_updater(5 GB, exponential, 2, $task.attempt, memory)"
         }
       },
       "withName:run_DepthOfCoverage_GATK": {
@@ -403,22 +431,40 @@
           "closure": "retry_updater(28.8 GB, exponential, 2, $task.attempt, memory)"
         }
       },
+      "withName:run_GatherBamFiles_Picard": {
+        "cpus": "1",
+        "memory": {
+          "1": "2 GB",
+          "2": "8 GB",
+          "3": "32 GB",
+          "closure": "retry_updater(2 GB, exponential, 4, $task.attempt, memory)"
+        }
+      },
+      "withName:run_GatherPileupSummaries_GATK": {
+        "cpus": "1",
+        "memory": {
+          "1": "2 GB",
+          "2": "4 GB",
+          "3": "8 GB",
+          "closure": "retry_updater(2 GB, exponential, 2, $task.attempt, memory)"
+        }
+      },
       "withName:run_GetPileupSummaries_GATK": {
         "cpus": "1",
         "memory": {
-          "1": "28.8 GB",
-          "2": "57.6 GB",
-          "3": "64 GB",
-          "closure": "retry_updater(28.8 GB, exponential, 2, $task.attempt, memory)"
+          "1": "5 GB",
+          "2": "10 GB",
+          "3": "20 GB",
+          "closure": "retry_updater(5 GB, exponential, 2, $task.attempt, memory)"
         }
       },
       "withName:run_IndelRealigner_GATK": {
-        "cpus": "4",
+        "cpus": "1",
         "memory": {
-          "1": "6 GB",
-          "2": "24 GB",
+          "1": "4 GB",
+          "2": "16 GB",
           "3": "64 GB",
-          "closure": "retry_updater(6 GB, exponential, 4, $task.attempt, memory)"
+          "closure": "retry_updater(4 GB, exponential, 4, $task.attempt, memory)"
         }
       },
       "withName:run_MergeSamFiles_Picard": {
@@ -431,12 +477,12 @@
         }
       },
       "withName:run_RealignerTargetCreator_GATK": {
-        "cpus": "4",
+        "cpus": "1",
         "memory": {
-          "1": "6 GB",
-          "2": "12 GB",
-          "3": "24 GB",
-          "closure": "retry_updater(6 GB, exponential, 2, $task.attempt, memory)"
+          "1": "4 GB",
+          "2": "8 GB",
+          "3": "16 GB",
+          "closure": "retry_updater(4 GB, exponential, 2, $task.attempt, memory)"
         }
       },
       "withName:run_SplitIntervals_GATK": {

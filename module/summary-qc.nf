@@ -1,4 +1,5 @@
-include { generate_standard_filename } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
+include { generate_standard_filename; sanitize_string } from '../external/pipeline-Nextflow-module/modules/common/generate_standardized_filename/main.nf'
+
 /*
     Nextflow module for getting pileup summaries of BAMs
 
@@ -19,11 +20,14 @@ include { generate_standard_filename } from '../external/pipeline-Nextflow-modul
 */
 process run_GetPileupSummaries_GATK {
     container params.docker_image_gatk
-    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
+    publishDir path: "${params.output_dir_base}/intermediate/${task.process.replace(':', '/')}",
       mode: "copy",
+      when: params.save_intermediate_files,
       pattern: '*.table'
 
-    ext log_dir_suffix: { "-${sample_id}" }
+    tag "${sample_id}-${interval_id}"
+
+    ext log_dir_suffix: { "-${sample_id}-${interval_id}" }
 
     input:
     path(reference_fasta)
@@ -32,13 +36,69 @@ process run_GetPileupSummaries_GATK {
     path(bundle_contest_hapmap_3p3_vcf_gz)
     path(bundle_contest_hapmap_3p3_vcf_gz_tbi)
     path(all_intervals)
-    tuple val(sample_id), path(bam), path(bam_index)
+    tuple val(sample_id), path(bam), path(bam_index), val(interval_id), path(split_interval)
 
     output:
     tuple val(sample_id), path("*getpileupsummaries.table"), emit: pileupsummaries
 
     script:
-    interval_options = all_intervals.collect{ "--intervals \"\$(realpath ${it})\"" }.join(' ')
+    base_interval_option = "--intervals ${split_interval}"
+
+    combined_interval_options = (params.is_targeted) ? "--intervals \"\$(realpath ${all_intervals})\" --interval-set-rule INTERSECTION" : ""
+
+    output_filename = generate_standard_filename(
+        "GATK-${params.gatk_version}",
+        params.dataset_id,
+        sample_id,
+        [
+            'additional_information': "${interval_id}-getpileupsummaries"
+        ]
+    )
+    """
+    set -euo pipefail
+    gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
+        GetPileupSummaries \
+        --input ${bam} \
+        --reference ${reference_fasta} \
+        --variant ${bundle_contest_hapmap_3p3_vcf_gz} \
+        ${base_interval_option} \
+        ${combined_interval_options} \
+        --output ${output_filename}.table || touch ${output_filename}.table
+    """
+}
+
+/*
+    Nextflow module for gathering pileup summaries per sample
+
+    input:
+        reference_fasta_dict: path to dictionary for reference fasta
+        (sample_id, pileupsummaries): tuple of sample name and set of pileupsummaries
+
+    params:
+        params.output_dir_base: string(path)
+        params.docker_image_gatk: string
+        params.gatk_command_mem_diff: float(memory)
+*/
+process run_GatherPileupSummaries_GATK {
+    container params.docker_image_gatk
+    publishDir path: "${params.output_dir_base}/QC/${task.process.replace(':', '/')}",
+      mode: "copy",
+      pattern: '*.table'
+
+    tag "${sample_id}"
+
+    ext log_dir_suffix: { "-${sample_id}" }
+
+    input:
+    path(reference_fasta_dict)
+    tuple val(sample_id), path(pileupsummaries)
+
+    output:
+    tuple val(sample_id), path("*getpileupsummaries.table"), emit: gatheredsummaries
+
+    script:
+    input_summaries = pileupsummaries.collect{ "--I ${it}" }.join(' ')
+
     output_filename = generate_standard_filename(
         "GATK-${params.gatk_version}",
         params.dataset_id,
@@ -50,12 +110,10 @@ process run_GetPileupSummaries_GATK {
     """
     set -euo pipefail
     gatk --java-options "-Xmx${(task.memory - params.gatk_command_mem_diff).getMega()}m -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Djava.io.tmpdir=${workDir}" \
-        GetPileupSummaries \
-        --input ${bam} \
-        --reference ${reference_fasta} \
-        --variant ${bundle_contest_hapmap_3p3_vcf_gz} \
-        ${interval_options} \
-        --output ${output_filename}.table
+        GatherPileupSummaries \
+        ${input_summaries} \
+        --O ${output_filename}.table \
+        --sequence-dictionary ${reference_fasta_dict}
     """
 }
 
@@ -181,4 +239,90 @@ process run_DepthOfCoverage_GATK {
         --partition-type library \
         ${interval_options}
     """
+}
+
+workflow contamination_qc {
+    take:
+    bams_for_qc
+    samples_with_index
+
+    main:
+    bams_for_qc
+        .map{ input_bam ->
+            [
+                input_bam.sample_id,
+                input_bam.bam,
+                input_bam.bam_index,
+                input_bam.interval_id,
+                input_bam.split_interval
+            ]
+        }
+        .set{ input_ch_pileupsummaries }
+
+    input_intervals = (params.is_targeted) ? params.intervals : "${params.work_dir}/NO_FILE.interval_list"
+
+    run_GetPileupSummaries_GATK(
+        params.reference_fasta,
+        params.reference_fasta_fai,
+        params.reference_fasta_dict,
+        params.bundle_contest_hapmap_3p3_vcf_gz,
+        params.bundle_contest_hapmap_3p3_vcf_gz_tbi,
+        input_intervals,
+        input_ch_pileupsummaries
+    )
+
+    run_GetPileupSummaries_GATK.out.pileupsummaries
+        .filter{ summary -> (new File(summary[1].toString())).length() != 0 } // Filter out non-overlapping summary files
+        .groupTuple()
+        .set{ input_ch_gathersummaries }
+
+    run_GatherPileupSummaries_GATK(
+        params.reference_fasta_dict,
+        input_ch_gathersummaries
+    )
+
+    run_GatherPileupSummaries_GATK.out.gatheredsummaries
+        .map{ gatheredpileup -> gatheredpileup[0] }
+        .set{ pileupsgathered }
+
+    samples_with_index
+        .filter{ it.sample_type == 'normal' }
+        .map{ it -> [sanitize_string(it.sample_id)] }
+        .join(run_GatherPileupSummaries_GATK.out.gatheredsummaries)
+        .set{ normal_pileupsummaries }
+
+    samples_with_index
+        .filter{ it.sample_type == 'tumor' }
+        .map{ it -> [sanitize_string(it.sample_id)] }
+        .join(run_GatherPileupSummaries_GATK.out.gatheredsummaries)
+        .set{ tumor_pileupsummaries }
+
+    normal_pileupsummaries.combine(tumor_pileupsummaries)
+        .map{ it -> it.flatten() + ['tumor_paired'] }
+        .set{ paired_pileups }
+
+    normal_pileupsummaries.map{ it -> it + ['NO_ID', params.work_dir + '/NO_FILE.table', 'normal'] }
+        .set{ normal_pileups }
+
+    tumor_pileupsummaries.map{ ['NO_ID', params.work_dir + '/NO_FILE.table'] + it + 'tumor' }
+        .set{ tumor_pileups }
+
+    input_ch_calculate_contamination = normal_pileups
+
+    def sample_types = params.samples_to_process.collect{ sample -> sample.sample_type }
+
+    if (sample_types.contains('normal') && sample_types.contains('tumor')) {
+        input_ch_calculate_contamination
+            .mix(paired_pileups)
+            .set{ input_ch_calculate_contamination }
+    } else {
+        input_ch_calculate_contamination
+            .mix(tumor_pileups)
+            .set{ input_ch_calculate_contamination }
+    }
+
+    run_CalculateContamination_GATK(input_ch_calculate_contamination)
+
+    emit:
+    pileupsgathered = pileupsgathered
 }
