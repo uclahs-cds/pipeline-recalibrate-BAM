@@ -346,7 +346,7 @@
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "13 GB"
+                    "operand": "6 GB"
                 }
             }
         },
@@ -678,7 +678,7 @@
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "13 GB"
+                    "operand": "6 GB"
                 }
             }
         },
@@ -1010,7 +1010,7 @@
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "13 GB"
+                    "operand": "6 GB"
                 }
             }
         },
@@ -1342,7 +1342,7 @@
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "13 GB"
+                    "operand": "6 GB"
                 }
             }
         },
@@ -2006,7 +2006,7 @@
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "14 GB"
+                    "operand": "6 GB"
                 }
             }
         },
