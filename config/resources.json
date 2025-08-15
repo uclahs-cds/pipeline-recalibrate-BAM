@@ -3,7 +3,7 @@
         "run_validate_PipeVal": {
             "cpus": {
                 "min": 1,
-                "fraction": 0.06,
+                "fraction": 0.5,
                 "max": 1
             },
             "memory": {
@@ -15,7 +15,7 @@
         "calculate_sha512": {
             "cpus": {
                 "min": 1,
-                "fraction": 0.06,
+                "fraction": 0.5,
                 "max": 1
             },
             "memory": {
@@ -73,6 +73,18 @@
             }
         },
         "run_IndelRealigner_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.5,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.26,
+                "max": "1 GB"
+            }
+        },
+        "run_GatherBamFiles_Picard": {
             "cpus": {
                 "min": 1,
                 "fraction": 0.5,
@@ -145,6 +157,18 @@
             }
         },
         "run_GetPileupSummaries_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.5,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.26,
+                "max": "1 GB"
+            }
+        },
+        "run_GatherPileupSummaries_GATK": {
             "cpus": {
                 "min": 1,
                 "fraction": 0.5,
@@ -195,7 +219,7 @@
         "remove_interval_BAMs": {
             "cpus": {
                 "min": 1,
-                "fraction": 0.03,
+                "fraction": 0.5,
                 "max": 1
             },
             "memory": {
@@ -227,34 +251,22 @@
                 "fraction": 0.26,
                 "max": "1 GB"
             }
-        },
-        "run_GatherBamFiles_Picard": {
-            "cpus": {
-                "min": 1,
-                "fraction": 0.5,
-                "max": 1
-            },
-            "memory": {
-                "min": "1 GB",
-                "fraction": 0.26,
-                "max": "1 GB"
-            }
-        },
-        "run_GatherPileupSummaries_GATK": {
-            "cpus": {
-                "min": 1,
-                "fraction": 0.5,
-                "max": 1
-            },
-            "memory": {
-                "min": "1 GB",
-                "fraction": 0.26,
-                "max": "1 GB"
-            }
         }
     },
     "f8": {
-        "run_validate_PipeVal_with_metadata": {
+        "run_validate_PipeVal": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.06,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.03,
+                "max": "1 GB"
+            }
+        },
+        "calculate_sha512": {
             "cpus": {
                 "min": 1,
                 "fraction": 0.125,
@@ -266,7 +278,7 @@
                 "max": "1 GB"
             }
         },
-        "calculate_sha512": {
+        "run_validate_PipeVal_with_metadata": {
             "cpus": {
                 "min": 1,
                 "fraction": 0.125,
@@ -304,19 +316,19 @@
         },
         "run_RealignerTargetCreator_GATK": {
             "cpus": {
-                "min": 2,
+                "min": 1,
                 "fraction": 0.25,
-                "max": 2
+                "max": 1
             },
             "memory": {
-                "min": "4 GB",
+                "min": "2 GB",
                 "fraction": 0.25,
-                "max": "4 GB"
+                "max": "2 GB"
             },
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "4 GB"
+                    "operand": "2 GB"
                 }
             }
         },
@@ -327,14 +339,32 @@
                 "max": 1
             },
             "memory": {
-                "min": "4 GB",
+                "min": "3 GB",
                 "fraction": 0.25,
-                "max": "4 GB"
+                "max": "3 GB"
             },
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "12 GB"
+                    "operand": "6 GB"
+                }
+            }
+        },
+        "run_GatherBamFiles_Picard": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.25,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.5,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -365,12 +395,12 @@
             "memory": {
                 "min": "1 GB",
                 "fraction": 0.063,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
                     "strategy": "add",
-                    "operand": "2 GB"
+                    "operand": "3 GB"
                 }
             }
         },
@@ -443,6 +473,24 @@
                 "memory": {
                     "strategy": "add",
                     "operand": "3 GB"
+                }
+            }
+        },
+        "run_GatherPileupSummaries_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.125,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.063,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
                 }
             }
         },
@@ -535,42 +583,6 @@
                     "operand": "1 GB"
                 }
             }
-        },
-        "run_GatherBamFiles_Picard": {
-            "cpus": {
-                "min": 1,
-                "fraction": 0.25,
-                "max": 1
-            },
-            "memory": {
-                "min": "2 GB",
-                "fraction": 0.5,
-                "max": "2 GB"
-            },
-            "retry_strategy": {
-                "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
-                }
-            }
-        },
-        "run_GatherPileupSummaries_GATK": {
-            "cpus": {
-                "min": 1,
-                "fraction": 0.125,
-                "max": 1
-            },
-            "memory": {
-                "min": "1 GB",
-                "fraction": 0.063,
-                "max": "1 GB"
-            },
-            "retry_strategy": {
-                "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
-                }
-            }
         }
     },
     "f16": {
@@ -637,18 +649,18 @@
         "run_RealignerTargetCreator_GATK": {
             "cpus": {
                 "min": 1,
-                "fraction": 0.0625,
+                "fraction": 0.062,
                 "max": 1
             },
             "memory": {
-                "min": "4 GB",
+                "min": "2 GB",
                 "fraction": 0.13,
-                "max": "4 GB"
+                "max": "2 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "2 GB"
                 }
             }
         },
@@ -659,14 +671,32 @@
                 "max": 1
             },
             "memory": {
-                "min": "4 GB",
+                "min": "3 GB",
                 "fraction": 0.13,
-                "max": "4 GB"
+                "max": "3 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "6 GB"
+                }
+            }
+        },
+        "run_GatherBamFiles_Picard": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.25,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.5,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -677,14 +707,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.06,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -695,14 +725,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.07,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -719,26 +749,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
-                }
-            }
-        },
-        "run_GatherBamFiles_Picard": {
-            "cpus": {
-                "min": 1,
-                "fraction": 0.25,
-                "max": 1
-            },
-            "memory": {
-                "min": "2 GB",
-                "fraction": 0.5,
-                "max": "2 GB"
-            },
-            "retry_strategy": {
-                "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -755,8 +767,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -767,14 +779,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.07,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -785,14 +797,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.03,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -803,14 +815,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.07,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -821,14 +833,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.16,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -845,8 +857,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "5 GB"
                 }
             }
         },
@@ -884,6 +896,24 @@
                 "min": "1 GB",
                 "fraction": 0.03,
                 "max": "1 GB"
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.06,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.03,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
             }
         }
     },
@@ -955,14 +985,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "4 GB",
-                "fraction": 0.10,
-                "max": "4 GB"
+                "min": "3 GB",
+                "fraction": 0.1,
+                "max": "3 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -973,14 +1003,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "4 GB",
-                "fraction": 0.10,
-                "max": "4 GB"
+                "min": "3 GB",
+                "fraction": 0.1,
+                "max": "3 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "6 GB"
                 }
             }
         },
@@ -991,14 +1021,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.5,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1009,14 +1039,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.99,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1027,14 +1057,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.03,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1051,8 +1081,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1069,8 +1099,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1081,14 +1111,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.03,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1099,14 +1129,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.08,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "9 GB"
                 }
             }
         },
@@ -1117,14 +1147,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.03,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1135,14 +1165,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.08,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "9 GB"
                 }
             }
         },
@@ -1159,8 +1189,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "10 GB"
                 }
             }
         },
@@ -1198,6 +1228,24 @@
                 "min": "1 GB",
                 "fraction": 0.02,
                 "max": "1 GB"
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.03,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.02,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
             }
         }
     },
@@ -1275,8 +1323,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1287,14 +1335,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "4 GB",
+                "min": "3 GB",
                 "fraction": 0.07,
-                "max": "4 GB"
+                "max": "3 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "6 GB"
                 }
             }
         },
@@ -1305,14 +1353,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.5,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1323,14 +1371,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.53,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1341,14 +1389,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1365,8 +1413,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1383,8 +1431,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1395,14 +1443,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1413,14 +1461,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.04,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "9 GB"
                 }
             }
         },
@@ -1431,14 +1479,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1449,14 +1497,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.04,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "9 GB"
                 }
             }
         },
@@ -1473,8 +1521,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "10 GB"
                 }
             }
         },
@@ -1513,6 +1561,24 @@
                 "fraction": 0.01,
                 "max": "1 GB"
             }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
+            }
         }
     },
     "m64": {
@@ -1524,7 +1590,7 @@
             },
             "memory": {
                 "min": "1 GB",
-                "fraction": 0.00,
+                "fraction": 0.01,
                 "max": "1 GB"
             }
         },
@@ -1548,7 +1614,7 @@
             },
             "memory": {
                 "min": "1 GB",
-                "fraction": 0.00,
+                "fraction": 0.01,
                 "max": "1 GB"
             }
         },
@@ -1560,7 +1626,7 @@
             },
             "memory": {
                 "min": "1 GB",
-                "fraction": 0.00,
+                "fraction": 0.01,
                 "max": "1 GB"
             }
         },
@@ -1572,7 +1638,7 @@
             },
             "memory": {
                 "min": "1 GB",
-                "fraction": 0.00,
+                "fraction": 0.01,
                 "max": "1 GB"
             }
         },
@@ -1589,8 +1655,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "0 GB"
                 }
             }
         },
@@ -1607,8 +1673,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "15 GB"
                 }
             }
         },
@@ -1619,14 +1685,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.5,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1637,14 +1703,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.51,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "9 GB"
                 }
             }
         },
@@ -1655,14 +1721,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
-                "fraction": 0.00,
-                "max": "2 GB"
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1679,8 +1745,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1697,8 +1763,8 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1709,14 +1775,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
-                "fraction": 0.00,
-                "max": "2 GB"
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1727,14 +1793,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "9 GB"
                 }
             }
         },
@@ -1745,14 +1811,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
-                "fraction": 0.00,
-                "max": "2 GB"
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1763,14 +1829,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "5 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "5 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "9 GB"
                 }
             }
         },
@@ -1787,8 +1853,62 @@
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "10 GB"
+                }
+            }
+        },
+        "remove_intermediate_files": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.02,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            }
+        },
+        "remove_interval_BAMs": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.02,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            }
+        },
+        "remove_merged_BAM": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.02,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.02,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
                 }
             }
         }
@@ -1809,12 +1929,24 @@
         "calculate_sha512": {
             "cpus": {
                 "min": 1,
-                "fraction": 0.06,
+                "fraction": 0.01,
                 "max": 1
             },
             "memory": {
                 "min": "1 GB",
-                "fraction": 0.03,
+                "fraction": 0.01,
+                "max": "1 GB"
+            }
+        },
+        "run_validate_PipeVal_with_metadata": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
                 "max": "1 GB"
             }
         },
@@ -1845,54 +1977,54 @@
         "run_RealignerTargetCreator_GATK": {
             "cpus": {
                 "min": 2,
-                "fraction": 0.10,
+                "fraction": 0.1,
                 "max": 6
             },
             "memory": {
                 "min": "4 GB",
-                "fraction": 0.10,
+                "fraction": 0.1,
                 "max": "10 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "10 GB"
                 }
             }
         },
         "run_IndelRealigner_GATK": {
             "cpus": {
                 "min": 1,
-                "fraction": 0.10,
+                "fraction": 0.01,
                 "max": 1
             },
             "memory": {
-                "min": "4 GB",
-                "fraction": 0.10,
-                "max": "5 GB"
+                "min": "3 GB",
+                "fraction": 0.1,
+                "max": "6 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "6 GB"
                 }
             }
         },
         "run_GatherBamFiles_Picard": {
             "cpus": {
                 "min": 1,
-                "fraction": 0.25,
+                "fraction": 0.01,
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
-                "fraction": 0.5,
-                "max": "2 GB"
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1903,14 +2035,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
-                "fraction": 0.53,
-                "max": "10 GB"
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "19 GB"
                 }
             }
         },
@@ -1921,14 +2053,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 4
+                    "strategy": "add",
+                    "operand": "7 GB"
                 }
             }
         },
@@ -1940,13 +2072,13 @@
             },
             "memory": {
                 "min": "4 GB",
-                "fraction": 0.10,
+                "fraction": 0.1,
                 "max": "8 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1958,13 +2090,13 @@
             },
             "memory": {
                 "min": "4 GB",
-                "fraction": 0.10,
+                "fraction": 0.1,
                 "max": "8 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "8 GB"
                 }
             }
         },
@@ -1975,14 +2107,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -1993,14 +2125,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "3 GB",
-                "fraction": 0.05,
-                "max": "10 GB"
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "19 GB"
                 }
             }
         },
@@ -2011,14 +2143,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "2 GB",
+                "min": "1 GB",
                 "fraction": 0.01,
-                "max": "2 GB"
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "3 GB"
                 }
             }
         },
@@ -2029,14 +2161,14 @@
                 "max": 1
             },
             "memory": {
-                "min": "3 GB",
-                "fraction": 0.05,
-                "max": "10 GB"
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "19 GB"
                 }
             }
         },
@@ -2048,13 +2180,13 @@
             },
             "memory": {
                 "min": "4 GB",
-                "fraction": 0.10,
+                "fraction": 0.1,
                 "max": "10 GB"
             },
             "retry_strategy": {
                 "memory": {
-                    "strategy": "exponential",
-                    "operand": 2
+                    "strategy": "add",
+                    "operand": "10 GB"
                 }
             }
         },
@@ -2092,6 +2224,24 @@
                 "min": "1 GB",
                 "fraction": 0.01,
                 "max": "1 GB"
+            }
+        },
+        "run_GatherBQSRReports_GATK": {
+            "cpus": {
+                "min": 1,
+                "fraction": 0.01,
+                "max": 1
+            },
+            "memory": {
+                "min": "1 GB",
+                "fraction": 0.01,
+                "max": "1 GB"
+            },
+            "retry_strategy": {
+                "memory": {
+                    "strategy": "add",
+                    "operand": "1 GB"
+                }
             }
         }
     }
