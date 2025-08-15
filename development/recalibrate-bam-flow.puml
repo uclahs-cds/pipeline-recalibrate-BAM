@@ -32,63 +32,85 @@ Validate the input BAM and index file;
 
 
 |i|
-
-:==run_RealignerTargetCreator_GATK
-----
-Split input BAMs by interval and identify
-potentially misaligned sub-intervals to
-target across all input samples;
-
-:==run_IndelRealigner_GATK
-----
-Realign indels across all input
-samples simultaneously;
-
-|s|
-
-:==run_BaseRecalibrator_GATK
-----
-Generate base quality score recalibration
-(BQSR) table based on read group, reported
-quality score, machine cycle, and nucleotide
-context;
-
-|i|
-
-:==run_ApplyBQSR_GATK
-----
-Apply the recalibration to each input
-sample sequentially;
-
-|s|
-
-:==run_MergeSamFiles_Picard
-----
-Merge interval BAMS into recalibrated BAM;
-
-if (Parallelize by\nchromosome?) is (No) then
-    :==deduplicate_records_SAMtools
+if (run_indelrealignment?) is (Yes) then
+    :==run_RealignerTargetCreator_GATK
     ----
-    Remove duplicate reads due to 
-    overlap on interval splitting sites;
-else (Yes)
+    Split input BAMs by interval and identify
+    potentially misaligned sub-intervals to
+    target across all input samples;
+
+    :==run_IndelRealigner_GATK
+    ----
+    Realign indels across all input
+    samples simultaneously;
+else (No)
 endif
 
-:==run_index_SAMtools
-----
-Create index file for recalibrated BAM;
+if (run_baserecalibration?) is (Yes) then
+    :==run_BaseRecalibrator_GATK
+    ----
+    Generate base quality score recalibration
+    (BQSR) table based on read group, reported
+    quality score, machine cycle, and nucleotide
+    context;
 
-:==calculate_sha512
-----
-Generate sha512 checksum for
-recalibrated BAM and index file;
+    :==run_ApplyBQSR_GATK
+    ----
+    Apply the recalibration to each input
+    sample sequentially;
+else (No)
+endif
 
+|s|
 split
+    partition "BAM Merging" {
+        if (Parallelize by\nchromosome?) is (Yes) then
+            :==run_GatherBamFiles_GATK
+            ----
+            Gather BAM files through
+            concatenation;
+        else (No)
+            :==run_MergeSamFiles_Picard
+            ----
+            Merge interval BAMS into recalibrated BAM;
+
+            :==deduplicate_records_SAMtools
+            ----
+            Remove duplicate reads due to 
+            overlap on interval splitting sites;
+
+            :==run_index_SAMtools
+            ----
+            Create index file for recalibrated BAM;
+        endif
+    }
+
+    :==calculate_sha512
+    ----
+    Generate sha512 checksum for
+    recalibrated BAM and index file;
+
+    if (Compute depth\nof coverage?) is (Yes) then
+        :==run_DepthOfCoverage_GATK
+        ----
+        Assess sequence coverage by a wide array
+        of metrics, partioned by sample, read
+        group, and library;
+    endif
+split again
+    |i|
+    
     :==run_GetPileupSummaries_GATK
     ----
     Summarize counts of reads that support
     reference, alternate, and other alleles
     for given sites;
+
+    |s|
+
+    :==run_GatherPileupSummaries_GATK
+    ----
+    Gather interval-level pileup summaries;
 
     :==run_CalculateContamination_GATK
     ----
@@ -97,14 +119,6 @@ split
 
     If the input is a paired sample, run
     again in matched normal mode;
-split again
-    if (Compute depth\nof coverage?) is (Yes) then
-        :==run_DepthOfCoverage_GATK
-        ----
-        Assess sequence coverage by a wide array
-        of metrics, partioned by sample, read
-        group, and library;
-    endif
 end split
 
 stop
